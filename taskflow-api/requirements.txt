@@ -17,3 +17,4 @@ python-json-logger
 httpx
 pytest
 pytest-asyncio
+docker
