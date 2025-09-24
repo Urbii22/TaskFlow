@@ -8,6 +8,7 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 from app.models import user  # importa modelos para que Alembic los vea
+from app.models import board, column, task, comment  # asegurar descubrimiento de todos los modelos
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

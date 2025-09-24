@@ -1,5 +1,5 @@
 from sqlalchemy import String, Enum, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from app.db.base import Base
 import enum
@@ -16,3 +16,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.USER, nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    
+    # Relaciones inversas
+    boards = relationship("Board", back_populates="owner", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="assignee")
+    comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
