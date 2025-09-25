@@ -71,10 +71,17 @@ Dockerfile
 
 ### Opción A) Con Docker (recomendada)
 
-1) Copia variables de entorno:
+1) Crea o edita `.env` con POSTGRES_HOST=db:
 
-```bash
-cp .env.example .env
+```env
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=taskflow
+POSTGRES_USER=taskflow
+POSTGRES_PASSWORD=taskflow
+REDIS_URL=redis://redis:6379/0
+ENV=dev
+DEBUG=True
 ```
 
 2) Build + levantar servicios:
@@ -116,23 +123,35 @@ docker compose run --rm api python -m app.db.init_data
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
 ```
 
-2) Levanta Postgres (local o con Docker):
+2) Crea `.env` para entorno local (sin Docker):
+
+```env
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=taskflow
+POSTGRES_USER=taskflow
+POSTGRES_PASSWORD=taskflow
+REDIS_URL=redis://localhost:6379/0
+ENV=dev
+DEBUG=True
+```
+
+3) Levanta Postgres (local o con Docker):
 
 ```bash
 docker run --name taskflow-db -e POSTGRES_USER=taskflow -e POSTGRES_PASSWORD=taskflow   -e POSTGRES_DB=taskflow -p 5432:5432 -d postgres:16
 ```
 
-3) Migraciones:
+4) Migraciones:
 
 ```bash
 alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
 
-4) Ejecuta la API:
+5) Ejecuta la API:
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -142,7 +161,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## 🔑 Variables de entorno (`.env`)
 
-Ejemplo mínimo:
+Ejemplos mínimos según el modo de ejecución:
+
+Docker (compose):
 
 ```env
 # App
@@ -154,20 +175,55 @@ SECRET_KEY=changeme-super-secret
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 CORS_ORIGINS=["http://localhost:3000","http://localhost:5173"]
 
-# DB
-DATABASE_URL=postgresql+psycopg://taskflow:taskflow@db:5432/taskflow
-# Para local sin Docker: postgresql+psycopg://taskflow:taskflow@localhost:5432/taskflow
+# DB (Docker)
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=taskflow
+POSTGRES_USER=taskflow
+POSTGRES_PASSWORD=taskflow
 
-# Redis (opcional)
+# Redis (opcional, Docker)
 REDIS_URL=redis://redis:6379/0
 
 # Rate limit (opcional)
 RATE_LIMIT_PER_MINUTE=60
 
-# Primer superusuario (se usa en seed opcional)
+# Primer superusuario (seed opcional)
 FIRST_SUPERUSER_EMAIL=admin@taskflow.dev
 FIRST_SUPERUSER_PASSWORD=admin1234
 ```
+
+Local (sin Docker):
+
+```env
+# App
+APP_NAME=TaskFlow
+ENV=dev
+DEBUG=true
+LOG_LEVEL=INFO
+SECRET_KEY=changeme-super-secret
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+CORS_ORIGINS=["http://localhost:3000","http://localhost:5173"]
+
+# DB (Local)
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=taskflow
+POSTGRES_USER=taskflow
+POSTGRES_PASSWORD=taskflow
+
+# Redis (opcional, Local)
+REDIS_URL=redis://localhost:6379/0
+
+# Rate limit (opcional)
+RATE_LIMIT_PER_MINUTE=60
+
+# Primer superusuario (seed opcional)
+FIRST_SUPERUSER_EMAIL=admin@taskflow.dev
+FIRST_SUPERUSER_PASSWORD=admin1234
+```
+
+Nota: si ves el error "[Errno 11001] getaddrinfo failed" al ejecutar Alembic en local, revisa que `POSTGRES_HOST=localhost`. Cuando corras con Docker, debe ser `POSTGRES_HOST=db`.
 
 ---
 
