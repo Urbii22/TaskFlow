@@ -1,0 +1,43 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test and coverage artifacts
+.pytest_cache/
+htmlcov/
+.coverage*
+.mypy_cache/
+.ruff_cache/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual/env files
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.python-version
+
+# VCS/CI
+.git
+.gitignore
+.gitattributes
+.github/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Project-specific
+tests/
+docker-compose.yml
+
