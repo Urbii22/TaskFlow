@@ -7,6 +7,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.logging import setup_logging
 from app.api.routers import health as health_router
+from app.api.routers import auth as auth_router
 
 setup_logging()
 
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
 
     app.include_router(health_router.router, tags=["health"])
+    app.include_router(auth_router.router)
 
     @app.get("/")
     def root():

@@ -1,1 +1,33 @@
 .venv/
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test/coverage
+.pytest_cache/
+.coverage*
+htmlcov/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+
+# Envs
+venv/
+.env
+.env.*
+.python-version
+
+# IDE/editors
+.vscode/
+.idea/
+
+# Type-check / linters
+.mypy_cache/
+.ruff_cache/
+
+# OS junk
+Thumbs.db
+.DS_Store
