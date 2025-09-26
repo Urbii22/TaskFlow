@@ -9,6 +9,7 @@ from app.core.logging import setup_logging
 from app.api.routers import health as health_router
 from app.api.routers import auth as auth_router
 from app.api.routers import boards as boards_router
+from app.api.routers import columns as columns_router
 
 setup_logging()
 
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router.router, prefix="/api/v1", tags=["health"])
     app.include_router(auth_router.router, prefix="/api/v1")
     app.include_router(boards_router.router, prefix="/api/v1")
+    app.include_router(columns_router.router, prefix="/api/v1")
 
     @app.get("/")
     def root():

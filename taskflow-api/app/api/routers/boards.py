@@ -5,6 +5,7 @@ from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
+from app.schemas.column import ColumnRead
 from app.services.board_service import (
     create_board,
     delete_board,
@@ -12,6 +13,7 @@ from app.services.board_service import (
     get_board,
     update_board,
 )
+from app.services.column_service import get_columns_by_board
 
 
 router = APIRouter(prefix="/boards", tags=["boards"])
@@ -70,4 +72,20 @@ def delete_board_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado o sin permisos")
     return board
 
+
+
+@router.get("/{board_id}/columns", response_model=list[ColumnRead])
+def list_board_columns_endpoint(
+    board_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # La función de servicio valida ownership internamente
+    columns = get_columns_by_board(db, board_id=board_id, current_user=current_user)
+    if columns == []:
+        # Puede ser tablero inexistente o sin permisos; devolvemos 404 para no filtrar información
+        board = get_board(db, board_id=board_id, current_user=current_user)
+        if board is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado o sin permisos")
+    return columns
 
