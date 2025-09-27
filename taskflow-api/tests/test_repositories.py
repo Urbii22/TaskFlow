@@ -5,6 +5,8 @@ from app.db.session import get_db
 from app.repositories.user_repository import UserRepository
 from app.repositories.board_repository import BoardRepository
 from app.repositories.column_repository import ColumnRepository
+from app.repositories.task_repository import TaskRepository
+from app.models.task import TaskPriority
 from app.models.user import Role
 
 
@@ -58,6 +60,45 @@ def test_column_repository_get_multi_by_board_ordered():
         c1 = column_repo.create(db, {"name": "C1", "position": 1, "board_id": b.id})
         cols = column_repo.get_multi_by_board(db, board_id=b.id)
         assert [c.id for c in cols] == [c1.id, c2.id]
+    finally:
+        gen.close()
+
+
+def test_task_repository_get_multi_by_column_ordered():
+    user_repo = UserRepository()
+    board_repo = BoardRepository()
+    column_repo = ColumnRepository()
+    task_repo = TaskRepository()
+
+    db, gen = _get_db_session_for_test()
+    try:
+        u = user_repo.create(db, {"email": "owner2@example.com", "password_hash": "h"})
+        b = board_repo.create(db, {"name": "B", "owner_id": u.id})
+        c = column_repo.create(db, {"name": "C", "position": 1, "board_id": b.id})
+
+        t2 = task_repo.create(
+            db,
+            {
+                "title": "T2",
+                "description": None,
+                "priority": TaskPriority.MEDIUM,
+                "position": 2,
+                "column_id": c.id,
+            },
+        )
+        t1 = task_repo.create(
+            db,
+            {
+                "title": "T1",
+                "description": None,
+                "priority": TaskPriority.MEDIUM,
+                "position": 1,
+                "column_id": c.id,
+            },
+        )
+
+        tasks = task_repo.get_multi_by_column(db, column_id=c.id)
+        assert [t.id for t in tasks] == [t1.id, t2.id]
     finally:
         gen.close()
 

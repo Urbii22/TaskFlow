@@ -11,6 +11,8 @@ from app.services.column_service import (
     get_column,
     update_column,
 )
+from app.services.task_service import get_tasks_by_column
+from app.schemas.task import TaskRead
 
 
 router = APIRouter(prefix="/columns", tags=["columns"])
@@ -64,5 +66,19 @@ def delete_column_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Columna no encontrada o sin permisos")
     return column
 
+
+@router.get("/{column_id}/tasks", response_model=list[TaskRead])
+def list_column_tasks_endpoint(
+    column_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    tasks = get_tasks_by_column(db, column_id=column_id, current_user=current_user)
+    if tasks == []:
+        # Puede ser columna inexistente o sin permisos
+        column = get_column(db, column_id=column_id, current_user=current_user)
+        if column is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Columna no encontrada o sin permisos")
+    return tasks
 
 

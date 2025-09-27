@@ -12,13 +12,18 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    column_id: int
+    assignee_id: int | None = None
+    position: int | None = None
 
 
 class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     priority: TaskPriority | None = None
+    column_id: int | None = None
+    assignee_id: int | None = None
+    position: int | None = None
 
 
 class TaskRead(TaskBase):

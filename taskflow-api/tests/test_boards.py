@@ -2,6 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 from app.main import app as fastapi_app
+from app.schemas.task import TaskCreate
 
 
 async def register_and_login(ac: AsyncClient, email: str, password: str) -> str:
@@ -57,6 +58,58 @@ async def test_boards_crud_and_ownership():
         # Eliminar board (A)
         resp_delete = await ac.delete(f"/api/v1/boards/{board['id']}", headers=headers_a)
         assert resp_delete.status_code == 200
+
+
+@pytest.mark.anyio
+async def test_tasks_api_crud_and_permissions():
+    transport = ASGITransport(app=fastapi_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        token_a = await register_and_login(ac, "taskapia@example.com", "secret123")
+        headers_a = {"Authorization": f"Bearer {token_a}"}
+
+        # Crear board y columna
+        board = (await ac.post("/api/v1/boards/", json={"name": "B"}, headers=headers_a)).json()
+        column = (
+            await ac.post(
+                "/api/v1/columns/",
+                json={"name": "C1", "position": 1, "board_id": board["id"]},
+                headers=headers_a,
+            )
+        ).json()
+
+        # Crear tarea
+        resp_task = await ac.post(
+            "/api/v1/tasks/",
+            json={"title": "T1", "description": "d", "priority": "MEDIUM", "column_id": column["id"]},
+            headers=headers_a,
+        )
+        assert resp_task.status_code == 201, resp_task.text
+        task = resp_task.json()
+
+        # Obtener y listar
+        assert (await ac.get(f"/api/v1/tasks/{task['id']}", headers=headers_a)).status_code == 200
+        resp_list = await ac.get(f"/api/v1/columns/{column['id']}/tasks", headers=headers_a)
+        assert resp_list.status_code == 200 and any(t["id"] == task["id"] for t in resp_list.json())
+
+        # Actualizar
+        resp_upd = await ac.patch(
+            f"/api/v1/tasks/{task['id']}",
+            json={"title": "T2", "priority": "HIGH"},
+            headers=headers_a,
+        )
+        assert resp_upd.status_code == 200 and resp_upd.json()["title"] == "T2"
+
+        # Usuario B no puede acceder
+        token_b = await register_and_login(ac, "taskapib@example.com", "secret123")
+        headers_b = {"Authorization": f"Bearer {token_b}"}
+        assert (await ac.get(f"/api/v1/tasks/{task['id']}", headers=headers_b)).status_code == 404
+        assert (
+            await ac.patch(f"/api/v1/tasks/{task['id']}", json={"title": "X"}, headers=headers_b)
+        ).status_code == 404
+        assert (await ac.delete(f"/api/v1/tasks/{task['id']}", headers=headers_b)).status_code == 404
+
+        # Eliminar (A)
+        assert (await ac.delete(f"/api/v1/tasks/{task['id']}", headers=headers_a)).status_code == 200
 
 
 

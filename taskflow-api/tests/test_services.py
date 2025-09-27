@@ -19,6 +19,14 @@ from app.services.column_service import (
     update_column,
     delete_column,
 )
+from app.services.task_service import (
+    create_task,
+    get_task,
+    update_task,
+    delete_task,
+    get_tasks_by_column,
+)
+from app.schemas.task import TaskCreate, TaskUpdate
 from app.schemas.user import UserCreate
 from app.schemas.board import BoardCreate, BoardUpdate
 from app.schemas.column import ColumnCreate, ColumnUpdate
@@ -116,6 +124,62 @@ def test_column_service_crud_and_permissions():
         # Delete por owner -> OK
         removed = delete_column(db, column_id=c.id, current_user=owner)
         assert removed and removed.id == c.id
+    finally:
+        gen.close()
+
+
+def test_task_service_crud_permissions_and_list_by_column():
+    owner = _make_user("taskowner@svc.com")
+    other = _make_user("taskother@svc.com")
+
+    db, gen = _get_db_session_for_test()
+    try:
+        # Board y columna del owner
+        board = create_board(db, current_user=owner, board_in=BoardCreate(name="B"))
+        column = create_column(
+            db,
+            current_user=owner,
+            column_in=ColumnCreate(name="C1", position=1, board_id=board.id),
+        )
+
+        # Crear tarea
+        t = create_task(
+            db,
+            current_user=owner,
+            column_id=column.id,
+            task_in=TaskCreate(title="T1", description="d", priority="MEDIUM", column_id=column.id),
+        )
+        assert t is not None
+
+        # Obtener con owner OK, con otro None
+        assert get_task(db, task_id=t.id, current_user=owner) is not None
+        assert get_task(db, task_id=t.id, current_user=other) is None
+
+        # Listar por columna
+        tasks = get_tasks_by_column(db, column_id=column.id, current_user=owner)
+        assert len(tasks) == 1 and tasks[0].id == t.id
+
+        # Actualizar
+        t2 = update_task(
+            db,
+            task_id=t.id,
+            task_in=TaskUpdate(title="T2", priority="HIGH"),
+            current_user=owner,
+        )
+        assert t2 and t2.title == "T2" and str(t2.priority) == "TaskPriority.HIGH"
+
+        # Update por otro -> None
+        assert (
+            update_task(db, task_id=t.id, task_in=TaskUpdate(title="X"), current_user=other)
+            is None
+        )
+
+        # Delete por otro -> None
+        assert delete_task(db, task_id=t.id, current_user=other) is None
+
+        # Delete por owner -> OK
+        removed = delete_task(db, task_id=t.id, current_user=owner)
+        assert removed and removed.id == t.id
     finally:
         gen.close()
 
