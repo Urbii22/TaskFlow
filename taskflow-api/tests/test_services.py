@@ -27,6 +27,7 @@ from app.services.task_service import (
     get_tasks_by_column,
 )
 from app.schemas.task import TaskCreate, TaskUpdate
+from app.models.task import TaskPriority
 from app.schemas.user import UserCreate
 from app.schemas.board import BoardCreate, BoardUpdate
 from app.schemas.column import ColumnCreate, ColumnUpdate
@@ -158,6 +159,41 @@ def test_task_service_crud_permissions_and_list_by_column():
         # Listar por columna
         tasks = get_tasks_by_column(db, column_id=column.id, current_user=owner)
         assert len(tasks) == 1 and tasks[0].id == t.id
+
+        # Crear segunda tarea para probar filtros
+        t_b = create_task(
+            db,
+            current_user=owner,
+            column_id=column.id,
+            task_in=TaskCreate(title="T-B", description=None, priority="HIGH", column_id=column.id),
+        )
+        assert t_b is not None
+
+        # Filtro por prioridad HIGH
+        only_high = get_tasks_by_column(
+            db,
+            column_id=column.id,
+            current_user=owner,
+            priority=TaskPriority.HIGH,
+        )
+        assert all(str(x.priority) == "TaskPriority.HIGH" for x in only_high)
+
+        # Asignar t a owner y filtrar por assignee
+        _ = update_task(
+            db,
+            task_id=t.id,
+            task_in=TaskUpdate(assignee_id=owner.id),
+            current_user=owner,
+        )
+        only_owner = get_tasks_by_column(
+            db,
+            column_id=column.id,
+            current_user=owner,
+            assignee_id=owner.id,
+        )
+        assert any(x.id == t.id for x in only_owner) and all(
+            (x.assignee_id == owner.id) for x in only_owner
+        )
 
         # Actualizar
         t2 = update_task(

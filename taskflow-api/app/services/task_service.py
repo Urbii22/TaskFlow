@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.models.task import Task
+from app.models.task import Task, TaskPriority
 from app.models.user import User
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
@@ -89,11 +89,25 @@ def delete_task(db: Session, *, task_id: int, current_user: User) -> Task | None
 
 
 def get_tasks_by_column(
-    db: Session, *, column_id: int, current_user: User, skip: int = 0, limit: int = 100
+    db: Session,
+    *,
+    column_id: int,
+    current_user: User,
+    skip: int = 0,
+    limit: int = 100,
+    priority: TaskPriority | None = None,
+    assignee_id: int | None = None,
 ):
     column = get_column(db, column_id=column_id, current_user=current_user)
     if column is None:
         return []
-    return task_repository.get_multi_by_column(db, column_id=column_id, skip=skip, limit=limit)
+    return task_repository.get_multi_by_column(
+        db,
+        column_id=column_id,
+        skip=skip,
+        limit=limit,
+        priority=priority,
+        assignee_id=assignee_id,
+    )
 
 

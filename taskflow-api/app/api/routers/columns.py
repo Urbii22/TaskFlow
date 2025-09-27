@@ -13,6 +13,7 @@ from app.services.column_service import (
 )
 from app.services.task_service import get_tasks_by_column
 from app.schemas.task import TaskRead
+from app.models.task import TaskPriority
 
 
 router = APIRouter(prefix="/columns", tags=["columns"])
@@ -70,10 +71,18 @@ def delete_column_endpoint(
 @router.get("/{column_id}/tasks", response_model=list[TaskRead])
 def list_column_tasks_endpoint(
     column_id: int,
+    priority: TaskPriority | None = None,
+    assignee_id: int | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    tasks = get_tasks_by_column(db, column_id=column_id, current_user=current_user)
+    tasks = get_tasks_by_column(
+        db,
+        column_id=column_id,
+        current_user=current_user,
+        priority=priority,
+        assignee_id=assignee_id,
+    )
     if tasks == []:
         # Puede ser columna inexistente o sin permisos
         column = get_column(db, column_id=column_id, current_user=current_user)

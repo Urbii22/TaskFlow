@@ -103,3 +103,59 @@ def test_task_repository_get_multi_by_column_ordered():
         gen.close()
 
 
+
+def test_task_repository_get_multi_by_column_filters():
+    user_repo = UserRepository()
+    board_repo = BoardRepository()
+    column_repo = ColumnRepository()
+    task_repo = TaskRepository()
+
+    db, gen = _get_db_session_for_test()
+    try:
+        owner = user_repo.create(db, {"email": "filtrowner@example.com", "password_hash": "h"})
+        assignee = user_repo.create(db, {"email": "assignee@example.com", "password_hash": "h"})
+        board = board_repo.create(db, {"name": "B", "owner_id": owner.id})
+        col = column_repo.create(db, {"name": "C", "position": 1, "board_id": board.id})
+
+        t1 = task_repo.create(
+            db,
+            {
+                "title": "T1",
+                "description": None,
+                "priority": TaskPriority.HIGH,
+                "position": 1,
+                "column_id": col.id,
+                "assignee_id": assignee.id,
+            },
+        )
+        _t2 = task_repo.create(
+            db,
+            {
+                "title": "T2",
+                "description": None,
+                "priority": TaskPriority.MEDIUM,
+                "position": 2,
+                "column_id": col.id,
+            },
+        )
+        t3 = task_repo.create(
+            db,
+            {
+                "title": "T3",
+                "description": None,
+                "priority": TaskPriority.HIGH,
+                "position": 3,
+                "column_id": col.id,
+            },
+        )
+
+        tasks_high = task_repo.get_multi_by_column(db, column_id=col.id, priority=TaskPriority.HIGH)
+        assert [t.id for t in tasks_high] == [t1.id, t3.id]
+
+        tasks_high_assignee = task_repo.get_multi_by_column(
+            db, column_id=col.id, priority=TaskPriority.HIGH, assignee_id=assignee.id
+        )
+        assert [t.id for t in tasks_high_assignee] == [t1.id]
+    finally:
+        gen.close()
+

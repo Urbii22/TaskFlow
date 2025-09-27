@@ -91,6 +91,47 @@ async def test_tasks_api_crud_and_permissions():
         resp_list = await ac.get(f"/api/v1/columns/{column['id']}/tasks", headers=headers_a)
         assert resp_list.status_code == 200 and any(t["id"] == task["id"] for t in resp_list.json())
 
+        # Crear otra tarea con distinta prioridad y assignee
+        resp_task2 = await ac.post(
+            "/api/v1/tasks/",
+            json={
+                "title": "T2",
+                "description": None,
+                "priority": "HIGH",
+                "column_id": column["id"],
+            },
+            headers=headers_a,
+        )
+        assert resp_task2.status_code == 201, resp_task2.text
+        task2 = resp_task2.json()
+
+        # Filtrar por prioridad HIGH
+        resp_filter_prio = await ac.get(
+            f"/api/v1/columns/{column['id']}/tasks?priority=HIGH",
+            headers=headers_a,
+        )
+        assert resp_filter_prio.status_code == 200
+        tasks_high = resp_filter_prio.json()
+        assert all(t["priority"] == "HIGH" for t in tasks_high)
+        assert any(t["id"] == task2["id"] for t in tasks_high)
+
+        # Asignar task1 al usuario (PUT/PATCH de tarea)
+        resp_assign = await ac.patch(
+            f"/api/v1/tasks/{task['id']}",
+            json={"assignee_id": 1},
+            headers=headers_a,
+        )
+        assert resp_assign.status_code == 200
+
+        # Filtrar por assignee_id
+        resp_filter_assignee = await ac.get(
+            f"/api/v1/columns/{column['id']}/tasks?assignee_id=1",
+            headers=headers_a,
+        )
+        assert resp_filter_assignee.status_code == 200
+        tasks_assignee = resp_filter_assignee.json()
+        assert any(t["id"] == task["id"] for t in tasks_assignee)
+
         # Actualizar
         resp_upd = await ac.patch(
             f"/api/v1/tasks/{task['id']}",
