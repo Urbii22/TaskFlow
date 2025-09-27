@@ -11,6 +11,7 @@ from app.api.routers import auth as auth_router
 from app.api.routers import boards as boards_router
 from app.api.routers import columns as columns_router
 from app.api.routers import tasks as tasks_router
+from app.api.routers import comments as comments_router
 
 setup_logging()
 
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(boards_router.router, prefix="/api/v1")
     app.include_router(columns_router.router, prefix="/api/v1")
     app.include_router(tasks_router.router, prefix="/api/v1")
+    app.include_router(comments_router.router, prefix="/api/v1")
 
     @app.get("/")
     def root():
