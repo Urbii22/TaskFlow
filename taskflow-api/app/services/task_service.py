@@ -97,11 +97,11 @@ def get_tasks_by_column(
     limit: int = 100,
     priority: TaskPriority | None = None,
     assignee_id: int | None = None,
-):
+) -> tuple[list[Task], int]:
     column = get_column(db, column_id=column_id, current_user=current_user)
     if column is None:
-        return []
-    return task_repository.get_multi_by_column(
+        return [], 0
+    items, total = task_repository.get_multi_by_column(
         db,
         column_id=column_id,
         skip=skip,
@@ -109,5 +109,6 @@ def get_tasks_by_column(
         priority=priority,
         assignee_id=assignee_id,
     )
+    return list(items), total
 
 

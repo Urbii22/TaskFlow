@@ -12,13 +12,14 @@ column_repository = ColumnRepository()
 
 def get_columns_by_board(
     db: Session, *, board_id: int, current_user: User, skip: int = 0, limit: int = 100
-):
+) -> tuple[list[Column], int]:
     board = get_board(db, board_id=board_id, current_user=current_user)
     if board is None:
-        return []
-    return column_repository.get_multi_by_board(
+        return [], 0
+    items, total = column_repository.get_multi_by_board(
         db, board_id=board_id, skip=skip, limit=limit
     )
+    return list(items), total
 
 
 def get_column(db: Session, *, column_id: int, current_user: User) -> Column | None:

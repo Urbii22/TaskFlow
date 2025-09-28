@@ -42,8 +42,8 @@ def test_board_repository_get_multi_by_owner():
         b1 = board_repo.create(db, {"name": "B1", "owner_id": u1.id})
         b2 = board_repo.create(db, {"name": "B2", "owner_id": u1.id})
         _ = board_repo.create(db, {"name": "B3", "owner_id": u2.id})
-        boards_u1 = board_repo.get_multi_by_owner(db, owner_id=u1.id)
-        assert {b.id for b in boards_u1} == {b1.id, b2.id}
+        boards_u1, total = board_repo.get_multi_by_owner(db, owner_id=u1.id)
+        assert total == 2 and {b.id for b in boards_u1} == {b1.id, b2.id}
     finally:
         gen.close()
 
@@ -58,8 +58,8 @@ def test_column_repository_get_multi_by_board_ordered():
         b = board_repo.create(db, {"name": "B", "owner_id": u.id})
         c2 = column_repo.create(db, {"name": "C2", "position": 2, "board_id": b.id})
         c1 = column_repo.create(db, {"name": "C1", "position": 1, "board_id": b.id})
-        cols = column_repo.get_multi_by_board(db, board_id=b.id)
-        assert [c.id for c in cols] == [c1.id, c2.id]
+        cols, total = column_repo.get_multi_by_board(db, board_id=b.id)
+        assert total == 2 and [c.id for c in cols] == [c1.id, c2.id]
     finally:
         gen.close()
 
@@ -97,8 +97,8 @@ def test_task_repository_get_multi_by_column_ordered():
             },
         )
 
-        tasks = task_repo.get_multi_by_column(db, column_id=c.id)
-        assert [t.id for t in tasks] == [t1.id, t2.id]
+        tasks, total = task_repo.get_multi_by_column(db, column_id=c.id)
+        assert total == 2 and [t.id for t in tasks] == [t1.id, t2.id]
     finally:
         gen.close()
 
@@ -149,13 +149,13 @@ def test_task_repository_get_multi_by_column_filters():
             },
         )
 
-        tasks_high = task_repo.get_multi_by_column(db, column_id=col.id, priority=TaskPriority.HIGH)
-        assert [t.id for t in tasks_high] == [t1.id, t3.id]
+        tasks_high, total = task_repo.get_multi_by_column(db, column_id=col.id, priority=TaskPriority.HIGH)
+        assert total == 2 and [t.id for t in tasks_high] == [t1.id, t3.id]
 
-        tasks_high_assignee = task_repo.get_multi_by_column(
+        tasks_high_assignee, total = task_repo.get_multi_by_column(
             db, column_id=col.id, priority=TaskPriority.HIGH, assignee_id=assignee.id
         )
-        assert [t.id for t in tasks_high_assignee] == [t1.id]
+        assert total == 1 and [t.id for t in tasks_high_assignee] == [t1.id]
     finally:
         gen.close()
 

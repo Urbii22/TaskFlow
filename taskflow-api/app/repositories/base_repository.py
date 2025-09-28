@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generic, Iterable, Sequence, TypeVar, Type
+from typing import Generic, Iterable, Sequence, TypeVar, Type, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -15,8 +15,11 @@ class BaseRepository(Generic[ModelType]):
     def get(self, db: Session, id: int) -> ModelType | None:
         return db.get(self.model, id)
 
-    def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> Sequence[ModelType]:
-        return db.query(self.model).offset(skip).limit(limit).all()
+    def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> Tuple[Sequence[ModelType], int]:
+        query = db.query(self.model)
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+        return items, total
 
     def create(self, db: Session, obj_in: dict) -> ModelType:
         db_obj = self.model(**obj_in)

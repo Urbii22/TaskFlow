@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -12,14 +12,14 @@ class CommentRepository(BaseRepository[Comment]):
 
     def get_multi_by_task(
         self, db: Session, *, task_id: int, skip: int = 0, limit: int = 100
-    ) -> Sequence[Comment]:
-        return (
+    ) -> Tuple[Sequence[Comment], int]:
+        query = (
             db.query(Comment)
             .filter(Comment.task_id == task_id)
             .order_by(Comment.created_at)
-            .offset(skip)
-            .limit(limit)
-            .all()
         )
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+        return items, total
 
 

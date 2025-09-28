@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
@@ -6,13 +6,16 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
 from app.services.task_service import create_task, delete_task, get_task, update_task
+from app.core.rate_limit import limiter
 
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
 @router.post("/", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 def create_task_endpoint(
+    request: Request,
     task_in: TaskCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -36,7 +39,9 @@ def get_task_endpoint(
 
 
 @router.patch("/{task_id}", response_model=TaskRead)
+@limiter.limit("30/minute")
 def update_task_endpoint(
+    request: Request,
     task_id: int,
     task_in: TaskUpdate,
     db: Session = Depends(get_db),
@@ -49,7 +54,9 @@ def update_task_endpoint(
 
 
 @router.delete("/{task_id}", response_model=TaskRead)
+@limiter.limit("30/minute")
 def delete_task_endpoint(
+    request: Request,
     task_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

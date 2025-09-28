@@ -28,10 +28,11 @@ def get_board(db: Session, *, board_id: int, current_user: User) -> Board | None
 
 def get_all_boards_by_user(
     db: Session, *, current_user: User, skip: int = 0, limit: int = 100
-):
-    return board_repository.get_multi_by_owner(
+) -> tuple[list[Board], int]:
+    items, total = board_repository.get_multi_by_owner(
         db, owner_id=current_user.id, skip=skip, limit=limit
     )
+    return list(items), total
 
 
 def update_board(

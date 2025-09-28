@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
+from app.api.dependencies import get_current_user, get_pagination_params
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
 from app.schemas.column import ColumnRead
+from app.schemas.pagination import Page
 from app.services.board_service import (
     create_board,
     delete_board,
@@ -14,13 +15,16 @@ from app.services.board_service import (
     update_board,
 )
 from app.services.column_service import get_columns_by_board
+from app.core.rate_limit import limiter
 
 
 router = APIRouter(prefix="/boards", tags=["boards"])
 
 
 @router.post("/", response_model=BoardRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 def create_board_endpoint(
+    request: Request,
     board_in: BoardCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -28,12 +32,19 @@ def create_board_endpoint(
     return create_board(db, current_user=current_user, board_in=board_in)
 
 
-@router.get("/", response_model=list[BoardRead])
+@router.get("/", response_model=Page[BoardRead])
+@limiter.limit("60/minute")
 def list_boards_endpoint(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    pagination: dict = Depends(get_pagination_params),
 ):
-    return get_all_boards_by_user(db, current_user=current_user)
+    items, total = get_all_boards_by_user(
+        db, current_user=current_user, skip=pagination["skip"], limit=pagination["limit"]
+    )
+    page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
+    return Page[BoardRead](items=list(items), total=total, page=page, size=pagination["limit"])
 
 
 @router.get("/{board_id}", response_model=BoardRead)
@@ -49,7 +60,9 @@ def get_board_endpoint(
 
 
 @router.patch("/{board_id}", response_model=BoardRead)
+@limiter.limit("30/minute")
 def update_board_endpoint(
+    request: Request,
     board_id: int,
     board_in: BoardUpdate,
     db: Session = Depends(get_db),
@@ -62,7 +75,9 @@ def update_board_endpoint(
 
 
 @router.delete("/{board_id}", response_model=BoardRead)
+@limiter.limit("30/minute")
 def delete_board_endpoint(
+    request: Request,
     board_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -74,18 +89,24 @@ def delete_board_endpoint(
 
 
 
-@router.get("/{board_id}/columns", response_model=list[ColumnRead])
+@router.get("/{board_id}/columns", response_model=Page[ColumnRead])
+@limiter.limit("60/minute")
 def list_board_columns_endpoint(
+    request: Request,
     board_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    pagination: dict = Depends(get_pagination_params),
 ):
     # La función de servicio valida ownership internamente
-    columns = get_columns_by_board(db, board_id=board_id, current_user=current_user)
-    if columns == []:
+    items, total = get_columns_by_board(
+        db, board_id=board_id, current_user=current_user, skip=pagination["skip"], limit=pagination["limit"]
+    )
+    if items == [] and total == 0:
         # Puede ser tablero inexistente o sin permisos; devolvemos 404 para no filtrar información
         board = get_board(db, board_id=board_id, current_user=current_user)
         if board is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado o sin permisos")
-    return columns
+    page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
+    return Page[ColumnRead](items=list(items), total=total, page=page, size=pagination["limit"]) 
 

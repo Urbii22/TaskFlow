@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, ExpiredSignatureError, jwt
 from sqlalchemy.orm import Session
@@ -52,4 +52,10 @@ def get_current_user(
 
     return user
 
+
+def get_pagination_params(
+    skip: int = Query(0, ge=0, description="Número de elementos a saltar (offset)"),
+    limit: int = Query(100, ge=1, le=1000, description="Tamaño de página (límite de elementos)"),
+):
+    return {"skip": skip, "limit": limit}
 

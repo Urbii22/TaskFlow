@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -19,18 +19,15 @@ class TaskRepository(BaseRepository[Task]):
         limit: int = 100,
         priority: TaskPriority | None = None,
         assignee_id: int | None = None,
-    ) -> Sequence[Task]:
+    ) -> Tuple[Sequence[Task], int]:
         query = db.query(Task).filter(Task.column_id == column_id)
         if priority is not None:
             query = query.filter(Task.priority == priority)
         if assignee_id is not None:
             query = query.filter(Task.assignee_id == assignee_id)
-        return (
-            query
-            .order_by(Task.position)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        query = query.order_by(Task.position)
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+        return items, total
 
 
