@@ -33,7 +33,8 @@ async def test_boards_crud_and_ownership():
         # Listar mis boards
         resp_list = await ac.get("/api/v1/boards/", headers=headers_a)
         assert resp_list.status_code == 200
-        assert any(b["id"] == board["id"] for b in resp_list.json())
+        data_page = resp_list.json()
+        assert any(b["id"] == board["id"] for b in data_page["items"])
 
         # Obtener board
         resp_get = await ac.get(f"/api/v1/boards/{board['id']}", headers=headers_a)
@@ -89,7 +90,9 @@ async def test_tasks_api_crud_and_permissions():
         # Obtener y listar
         assert (await ac.get(f"/api/v1/tasks/{task['id']}", headers=headers_a)).status_code == 200
         resp_list = await ac.get(f"/api/v1/columns/{column['id']}/tasks", headers=headers_a)
-        assert resp_list.status_code == 200 and any(t["id"] == task["id"] for t in resp_list.json())
+        assert resp_list.status_code == 200
+        data_tasks = resp_list.json()
+        assert any(t["id"] == task["id"] for t in data_tasks["items"])
 
         # Crear otra tarea con distinta prioridad y assignee
         resp_task2 = await ac.post(
@@ -111,9 +114,9 @@ async def test_tasks_api_crud_and_permissions():
             headers=headers_a,
         )
         assert resp_filter_prio.status_code == 200
-        tasks_high = resp_filter_prio.json()
-        assert all(t["priority"] == "HIGH" for t in tasks_high)
-        assert any(t["id"] == task2["id"] for t in tasks_high)
+        tasks_high_page = resp_filter_prio.json()
+        assert all(t["priority"] == "HIGH" for t in tasks_high_page["items"])
+        assert any(t["id"] == task2["id"] for t in tasks_high_page["items"])
 
         # Asignar task1 al usuario (PUT/PATCH de tarea)
         resp_assign = await ac.patch(
@@ -129,8 +132,8 @@ async def test_tasks_api_crud_and_permissions():
             headers=headers_a,
         )
         assert resp_filter_assignee.status_code == 200
-        tasks_assignee = resp_filter_assignee.json()
-        assert any(t["id"] == task["id"] for t in tasks_assignee)
+        tasks_assignee_page = resp_filter_assignee.json()
+        assert any(t["id"] == task["id"] for t in tasks_assignee_page["items"])
 
         # Actualizar
         resp_upd = await ac.patch(

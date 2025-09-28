@@ -71,8 +71,8 @@ def test_board_service_crud_and_ownership():
         # Read by other None
         assert get_board(db, board_id=b.id, current_user=other) is None
         # List for owner
-        boards = list(get_all_boards_by_user(db, current_user=owner))
-        assert any(x.id == b.id for x in boards)
+        boards, total = get_all_boards_by_user(db, current_user=owner)
+        assert total >= 1 and any(x.id == b.id for x in boards)
         # Update by owner
         b2 = update_board(db, board_id=b.id, board_in=BoardUpdate(name="B2"), current_user=owner)
         assert b2 and b2.name == "B2"
@@ -105,8 +105,8 @@ def test_column_service_crud_and_permissions():
         # Obtener con otro -> None
         assert get_column(db, column_id=c.id, current_user=other) is None
         # Listar columnas del board
-        cols = get_columns_by_board(db, board_id=board.id, current_user=owner)
-        assert len(cols) == 1 and cols[0].id == c.id
+        cols, total_cols = get_columns_by_board(db, board_id=board.id, current_user=owner)
+        assert total_cols == 1 and len(cols) == 1 and cols[0].id == c.id
         # Actualizar
         c2 = update_column(
             db,
@@ -157,8 +157,8 @@ def test_task_service_crud_permissions_and_list_by_column():
         assert get_task(db, task_id=t.id, current_user=other) is None
 
         # Listar por columna
-        tasks = get_tasks_by_column(db, column_id=column.id, current_user=owner)
-        assert len(tasks) == 1 and tasks[0].id == t.id
+        tasks, total_tasks = get_tasks_by_column(db, column_id=column.id, current_user=owner)
+        assert total_tasks == 1 and len(tasks) == 1 and tasks[0].id == t.id
 
         # Crear segunda tarea para probar filtros
         t_b = create_task(
@@ -170,13 +170,13 @@ def test_task_service_crud_permissions_and_list_by_column():
         assert t_b is not None
 
         # Filtro por prioridad HIGH
-        only_high = get_tasks_by_column(
+        only_high, total_high = get_tasks_by_column(
             db,
             column_id=column.id,
             current_user=owner,
             priority=TaskPriority.HIGH,
         )
-        assert all(str(x.priority) == "TaskPriority.HIGH" for x in only_high)
+        assert total_high >= 1 and all(str(x.priority) == "TaskPriority.HIGH" for x in only_high)
 
         # Asignar t a owner y filtrar por assignee
         _ = update_task(
@@ -185,13 +185,13 @@ def test_task_service_crud_permissions_and_list_by_column():
             task_in=TaskUpdate(assignee_id=owner.id),
             current_user=owner,
         )
-        only_owner = get_tasks_by_column(
+        only_owner, total_owner = get_tasks_by_column(
             db,
             column_id=column.id,
             current_user=owner,
             assignee_id=owner.id,
         )
-        assert any(x.id == t.id for x in only_owner) and all(
+        assert total_owner >= 1 and any(x.id == t.id for x in only_owner) and all(
             (x.assignee_id == owner.id) for x in only_owner
         )
 

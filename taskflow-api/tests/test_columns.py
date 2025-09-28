@@ -46,8 +46,8 @@ async def test_columns_crud_and_security():
         # Listar columnas del board
         resp_list_cols = await ac.get(f"/api/v1/boards/{board_a['id']}/columns", headers=headers_a)
         assert resp_list_cols.status_code == 200
-        cols = resp_list_cols.json()
-        assert isinstance(cols, list) and len(cols) == 1
+        cols_page = resp_list_cols.json()
+        assert isinstance(cols_page["items"], list) and len(cols_page["items"]) == 1
 
         # Actualizar columna
         resp_update_col = await ac.patch(
