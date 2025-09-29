@@ -9,8 +9,7 @@ async def register_and_login(ac: AsyncClient, email: str, password: str) -> str:
     assert resp_reg.status_code == 201, resp_reg.text
     resp_login = await ac.post("/api/v1/auth/login", data={"username": email, "password": password})
     assert resp_login.status_code == 200, resp_login.text
-    token = resp_login.json()["access_token"]
-    return token
+    return resp_login.json()["access_token"]
 
 
 @pytest.fixture()
@@ -119,5 +118,28 @@ async def test_columns_requires_auth_and_not_found_cases():
         # Listar columnas de board inexistente -> 404
         resp_list_404 = await ac.get("/api/v1/boards/999999/columns", headers=headers_a)
         assert resp_list_404.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_columns_crud_and_permissions():
+    transport = ASGITransport(app=fastapi_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        token_a = await register_and_login(ac, "colusera@example.com", "secret123")
+        headers_a = {"Authorization": f"Bearer {token_a}"}
+
+        board = (await ac.post("/api/v1/boards/", json={"name": "B"}, headers=headers_a)).json()
+        column = (
+            await ac.post(
+                "/api/v1/columns/",
+                json={"name": "C1", "position": 1, "board_id": board["id"]},
+                headers=headers_a,
+            )
+        ).json()
+
+        # Lista columnas (cacheable)
+        resp_cols = await ac.get(f"/api/v1/boards/{board['id']}/columns", headers=headers_a)
+        assert resp_cols.status_code == 200
+        resp_cols_cached = await ac.get(f"/api/v1/boards/{board['id']}/columns", headers=headers_a)
+        assert resp_cols_cached.status_code == 200
 
 

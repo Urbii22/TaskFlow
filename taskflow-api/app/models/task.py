@@ -4,6 +4,7 @@ from datetime import datetime
 import enum
 
 from sqlalchemy import ForeignKey, String, Text, Enum, Integer
+from sqlalchemy.types import TypeDecorator, TEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -43,4 +44,18 @@ class Task(Base):
     )
 
 
+    # Búsqueda de texto completo (PostgreSQL)
+    # Fallback para SQLite en tests: compila a TEXT
+    class TSVectorType(TypeDecorator):
+        impl = TEXT
+        cache_ok = True
+
+        def load_dialect_impl(self, dialect):  # type: ignore[override]
+            if dialect.name == "postgresql":
+                from sqlalchemy.dialects.postgresql import TSVECTOR as PG_TSVECTOR
+
+                return dialect.type_descriptor(PG_TSVECTOR())
+            return dialect.type_descriptor(TEXT())
+
+    search_vector: Mapped[str | None] = mapped_column(TSVectorType(), nullable=True, index=True)
 

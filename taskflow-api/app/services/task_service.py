@@ -5,6 +5,8 @@ from app.models.user import User
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.column_service import get_column
+from app.schemas.pagination import Page
+from app.core.cache import invalidate_tasks_cache_for_user
 
 
 task_repository = TaskRepository()
@@ -27,7 +29,10 @@ def create_task(
         data["assignee_id"] = task_in.assignee_id
     if task_in.position is not None:
         data["position"] = task_in.position
-    return task_repository.create(db, data)
+    created = task_repository.create(db, data)
+    if created is not None:
+        invalidate_tasks_cache_for_user(current_user.id)
+    return created
 
 
 def get_task(db: Session, *, task_id: int, current_user: User) -> Task | None:
@@ -73,7 +78,10 @@ def update_task(
     if not update_data:
         return task
 
-    return task_repository.update(db, task, update_data)
+    updated = task_repository.update(db, task, update_data)
+    if updated is not None:
+        invalidate_tasks_cache_for_user(current_user.id)
+    return updated
 
 
 def delete_task(db: Session, *, task_id: int, current_user: User) -> Task | None:
@@ -85,7 +93,10 @@ def delete_task(db: Session, *, task_id: int, current_user: User) -> Task | None
     if column is None:
         return None
 
-    return task_repository.remove(db, task_id)
+    removed = task_repository.remove(db, task_id)
+    if removed is not None:
+        invalidate_tasks_cache_for_user(current_user.id)
+    return removed
 
 
 def get_tasks_by_column(
@@ -111,4 +122,24 @@ def get_tasks_by_column(
     )
     return list(items), total
 
+
+
+def search_tasks(
+    db: Session,
+    *,
+    current_user: User,
+    q: str,
+    skip: int = 0,
+    limit: int = 100,
+) -> tuple[list[Task], int]:
+    if not q or q.strip() == "":
+        return [], 0
+    items, total = task_repository.search_tasks_by_owner(
+        db,
+        owner_id=current_user.id,
+        query=q,
+        skip=skip,
+        limit=limit,
+    )
+    return list(items), total
 

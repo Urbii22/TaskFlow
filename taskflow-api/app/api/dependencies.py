@@ -8,6 +8,7 @@ from app.core.security import ALGORITHM
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
+from fastapi import Request
 
 
 # Esquema OAuth2 para extraer el token Bearer del encabezado Authorization
@@ -17,6 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
+    request: Request = None,
 ) -> User:
     """Obtiene el usuario actual a partir del JWT.
 
@@ -50,6 +52,12 @@ def get_current_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
+    # Guardamos el usuario en request.state para key-builder de caché
+    try:
+        if request is not None:
+            request.state.user = user
+    except Exception:
+        pass
     return user
 
 

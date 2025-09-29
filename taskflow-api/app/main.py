@@ -8,6 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.logging import setup_logging
 from app.core.rate_limit import limiter
+from app.core.cache import init_cache
 from app.api.routers import health as health_router
 from app.api.routers import auth as auth_router
 from app.api.routers import boards as boards_router
@@ -41,6 +42,11 @@ def create_app() -> FastAPI:
 
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    @app.on_event("startup")
+    async def _startup_cache():
+        # Inicializa caché Redis
+        init_cache()
 
     app.include_router(health_router.router, prefix="/api/v1", tags=["health"])
     app.include_router(auth_router.router, prefix="/api/v1")

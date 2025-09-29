@@ -19,3 +19,5 @@ pytest
 pytest-asyncio
 docker
 python-multipart
+fastapi-cache2
+redis[hiredis]

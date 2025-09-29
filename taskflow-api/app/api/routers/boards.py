@@ -16,6 +16,8 @@ from app.services.board_service import (
 )
 from app.services.column_service import get_columns_by_board
 from app.core.rate_limit import limiter
+from fastapi_cache.decorator import cache
+from app.core.cache import default_key_builder
 
 
 router = APIRouter(prefix="/boards", tags=["boards"])
@@ -33,6 +35,7 @@ def create_board_endpoint(
 
 
 @router.get("/", response_model=Page[BoardRead])
+@cache(expire=60, namespace="boards:list", key_builder=default_key_builder)
 @limiter.limit("60/minute")
 def list_boards_endpoint(
     request: Request,
@@ -90,6 +93,7 @@ def delete_board_endpoint(
 
 
 @router.get("/{board_id}/columns", response_model=Page[ColumnRead])
+@cache(expire=60, namespace="boards:columns", key_builder=default_key_builder)
 @limiter.limit("60/minute")
 def list_board_columns_endpoint(
     request: Request,

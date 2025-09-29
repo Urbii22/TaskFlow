@@ -3,6 +3,7 @@ from httpx import AsyncClient, ASGITransport
 
 from app.main import app as fastapi_app
 from app.schemas.task import TaskCreate
+from fastapi_cache import FastAPICache
 
 
 async def register_and_login(ac: AsyncClient, email: str, password: str) -> str:
@@ -35,6 +36,10 @@ async def test_boards_crud_and_ownership():
         assert resp_list.status_code == 200
         data_page = resp_list.json()
         assert any(b["id"] == board["id"] for b in data_page["items"])
+
+        # Segunda llamada debería salir de caché sin error
+        resp_list_cached = await ac.get("/api/v1/boards/", headers=headers_a)
+        assert resp_list_cached.status_code == 200
 
         # Obtener board
         resp_get = await ac.get(f"/api/v1/boards/{board['id']}", headers=headers_a)
@@ -142,6 +147,12 @@ async def test_tasks_api_crud_and_permissions():
             headers=headers_a,
         )
         assert resp_upd.status_code == 200 and resp_upd.json()["title"] == "T2"
+
+        # Búsqueda y caché
+        resp_search = await ac.get("/api/v1/tasks/?q=T2", headers=headers_a)
+        assert resp_search.status_code == 200
+        resp_search_cached = await ac.get("/api/v1/tasks/?q=T2", headers=headers_a)
+        assert resp_search_cached.status_code == 200
 
         # Usuario B no puede acceder
         token_b = await register_and_login(ac, "taskapib@example.com", "secret123")

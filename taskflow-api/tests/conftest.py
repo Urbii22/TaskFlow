@@ -6,6 +6,8 @@ from sqlalchemy.pool import StaticPool
 from app.main import app as fastapi_app
 from app.db.base import Base
 from app.db.session import get_db
+from app.core.config import settings
+from app.core.cache import init_cache
 
 # Asegura el registro de modelos en Base.metadata
 import app.models.user as _models_user  # noqa: F401
@@ -43,6 +45,10 @@ def override_get_db():
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
+    # Señalar entorno de pruebas para usar caché en memoria
+    settings.ENV = "test"
+    # Inicializar caché (InMemoryBackend en tests)
+    init_cache()
     Base.metadata.create_all(bind=test_engine)
     # Override de la dependencia de BD
     fastapi_app.dependency_overrides[get_db] = override_get_db
