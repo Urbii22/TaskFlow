@@ -18,5 +18,3 @@ def create_user(db: Session, *, user_in: UserCreate) -> User:
         "password_hash": get_password_hash(user_in.password),
     }
     return user_repository.create(db, user_data)
-
-

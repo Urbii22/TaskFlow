@@ -37,5 +37,3 @@ def test_create_access_token_custom_expiry_short_window():
     now = int(time.time())
     exp = int(decoded["exp"])
     assert 0 < exp - now <= 5 + 2
-
-

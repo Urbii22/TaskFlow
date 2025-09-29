@@ -22,6 +22,3 @@ class Column(Base):
         cascade="all, delete-orphan",
         order_by="Task.position",
     )
-
-
-

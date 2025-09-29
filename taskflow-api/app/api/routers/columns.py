@@ -102,5 +102,3 @@ def list_column_tasks_endpoint(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Columna no encontrada o sin permisos")
     page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
     return Page[TaskRead](items=list(items), total=total, page=page, size=pagination["limit"])
-
-

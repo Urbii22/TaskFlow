@@ -89,5 +89,3 @@ def delete_task_endpoint(
     if task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada o sin permisos")
     return task
-
-

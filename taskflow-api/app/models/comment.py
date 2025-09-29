@@ -21,6 +21,3 @@ class Comment(Base):
     # Relaciones
     task = relationship("Task", back_populates="comments")
     author = relationship("User", back_populates="comments")
-
-
-

@@ -14,9 +14,11 @@ def setup_logging():
     root.handlers = [handler]
 
     structlog.configure(
-        processors=[structlog.processors.add_log_level,
-                    structlog.processors.TimeStamper(fmt="iso"),
-                    structlog.processors.JSONRenderer()],
+        processors=[
+            structlog.processors.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.JSONRenderer(),
+        ],
         wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,

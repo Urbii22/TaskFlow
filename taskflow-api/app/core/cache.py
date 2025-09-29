@@ -69,5 +69,3 @@ def invalidate_tasks_cache_for_user(_: int) -> None:
             asyncio.run(_clear_namespaces(["tasks:get", "tasks:search"]))
         except Exception:
             pass
-
-

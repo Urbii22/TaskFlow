@@ -10,5 +10,3 @@ async def test_boards_requires_auth():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/api/v1/boards/")
     assert resp.status_code in (401, 403)
-
-

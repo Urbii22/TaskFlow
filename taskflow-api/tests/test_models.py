@@ -1,4 +1,3 @@
-
 from app.db.session import get_db
 from app.main import app as fastapi_app
 from app.repositories.board_repository import BoardRepository
@@ -57,5 +56,3 @@ def test_cascade_delete_column_deletes_tasks():
         assert task_repo.get(db, task.id) is None
     finally:
         gen.close()
-
-

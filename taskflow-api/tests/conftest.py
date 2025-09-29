@@ -25,6 +25,7 @@ test_engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine, future=True)
 
+
 # Habilitar claves foráneas y cascadas en SQLite
 @event.listens_for(test_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):  # noqa: D401
@@ -58,5 +59,3 @@ def create_test_db():
 @pytest.fixture()
 def anyio_backend():
     return "asyncio"
-
-

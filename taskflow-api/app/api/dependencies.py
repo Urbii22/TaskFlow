@@ -64,4 +64,3 @@ def get_pagination_params(
     limit: int = Query(100, ge=1, le=1000, description="Tamaño de página (límite de elementos)"),
 ):
     return {"skip": skip, "limit": limit}
-

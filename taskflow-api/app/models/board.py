@@ -25,6 +25,3 @@ class Board(Base):
         cascade="all, delete-orphan",
         order_by="Column.position",
     )
-
-
-

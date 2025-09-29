@@ -163,6 +163,3 @@ async def test_tasks_api_crud_and_permissions():
 
         # Eliminar (A)
         assert (await ac.delete(f"/api/v1/tasks/{task['id']}", headers=headers_a)).status_code == 200
-
-
-

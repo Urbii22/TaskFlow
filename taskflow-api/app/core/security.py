@@ -39,5 +39,3 @@ def create_access_token(data: Dict[str, Any], expires_delta: timedelta | None = 
 
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
-
-

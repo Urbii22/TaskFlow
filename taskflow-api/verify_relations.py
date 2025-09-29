@@ -33,7 +33,7 @@ def main():
         s.commit()
 
         # 3) Task en la columna 1, asignada a assignee, con 2 comments
-        col1 = s.scalar(select(Column).where(Column.board_id==board.id, Column.position==1))
+        col1 = s.scalar(select(Column).where(Column.board_id == board.id, Column.position == 1))
         task = Task(
             title="Tarea",
             priority=TaskPriority.MEDIUM,
@@ -45,10 +45,12 @@ def main():
         s.commit()
         s.refresh(task)
 
-        s.add_all([
-            Comment(text="Hola", task_id=task.id, author_id=owner.id),
-            Comment(text="Que tal", task_id=task.id, author_id=assignee.id),
-        ])
+        s.add_all(
+            [
+                Comment(text="Hola", task_id=task.id, author_id=owner.id),
+                Comment(text="Que tal", task_id=task.id, author_id=assignee.id),
+            ]
+        )
         s.commit()
 
         # Verificaciones
@@ -57,7 +59,7 @@ def main():
         s.refresh(task)
         assert len(owner.boards) == 1, "owner.boards debe tener 1 board"
         positions = [c.position for c in board.columns]
-        assert positions == [1,2], f"board.columns no viene ordenado por position: {positions}"
+        assert positions == [1, 2], f"board.columns no viene ordenado por position: {positions}"
         assert task.assignee and task.assignee.id == assignee.id, "task.assignee no coincide"
         assert len(task.comments) == 2, "task.comments debería tener 2 comentarios"
 
@@ -98,6 +100,7 @@ def main():
         print("Todas las verificaciones pasaron correctamente.")
     finally:
         s.close()
+
 
 if __name__ == "__main__":
     main()

@@ -141,5 +141,3 @@ async def test_columns_crud_and_permissions():
         assert resp_cols.status_code == 200
         resp_cols_cached = await ac.get(f"/api/v1/boards/{board['id']}/columns", headers=headers_a)
         assert resp_cols_cached.status_code == 200
-
-

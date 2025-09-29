@@ -59,5 +59,3 @@ async def test_login_wrong_password():
         resp_login = await ac.post("/api/v1/auth/login", data={"username": email, "password": "incorrect"})
     assert resp_login.status_code == 400
     assert "Credenciales inválidas" in resp_login.text
-
-

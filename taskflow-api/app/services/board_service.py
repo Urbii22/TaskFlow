@@ -28,15 +28,11 @@ def get_board(db: Session, *, board_id: int, current_user: User) -> Board | None
 def get_all_boards_by_user(
     db: Session, *, current_user: User, skip: int = 0, limit: int = 100
 ) -> tuple[list[Board], int]:
-    items, total = board_repository.get_multi_by_owner(
-        db, owner_id=current_user.id, skip=skip, limit=limit
-    )
+    items, total = board_repository.get_multi_by_owner(db, owner_id=current_user.id, skip=skip, limit=limit)
     return list(items), total
 
 
-def update_board(
-    db: Session, *, board_id: int, board_in: BoardUpdate, current_user: User
-) -> Board | None:
+def update_board(db: Session, *, board_id: int, board_in: BoardUpdate, current_user: User) -> Board | None:
     board = board_repository.get(db, board_id)
     if board is None:
         return None
@@ -60,5 +56,3 @@ def delete_board(db: Session, *, board_id: int, current_user: User) -> Board | N
     if board.owner_id != current_user.id:
         return None
     return board_repository.remove(db, board_id)
-
-

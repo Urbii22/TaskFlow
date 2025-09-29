@@ -34,8 +34,6 @@ class TaskRepository(BaseRepository[Task]):
         items = query.offset(skip).limit(limit).all()
         return items, total
 
-
-
     def search_tasks_by_owner(
         self,
         db: Session,
@@ -74,4 +72,3 @@ class TaskRepository(BaseRepository[Task]):
         total = q.count()
         items = q.offset(skip).limit(limit).all()
         return items, total
-

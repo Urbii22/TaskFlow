@@ -18,5 +18,3 @@ def _rate_limit_key(request: Request) -> str:
 
 # Instancia única del rate limiter para toda la app
 limiter = Limiter(key_func=_rate_limit_key)
-
-

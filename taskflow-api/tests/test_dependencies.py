@@ -57,5 +57,3 @@ def test_get_current_user_expired_token_raises_401():
     finally:
         gen.close()
     assert exc.value.status_code == 401
-
-

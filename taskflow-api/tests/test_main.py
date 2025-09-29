@@ -30,5 +30,3 @@ async def test_metrics_endpoint_exposes_prometheus_metrics():
     assert "# HELP" in body
     # Debe contener algún métrico HTTP instrumentado
     assert "http" in body
-
-

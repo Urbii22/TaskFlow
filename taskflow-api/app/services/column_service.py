@@ -15,9 +15,7 @@ def get_columns_by_board(
     board = get_board(db, board_id=board_id, current_user=current_user)
     if board is None:
         return [], 0
-    items, total = column_repository.get_multi_by_board(
-        db, board_id=board_id, skip=skip, limit=limit
-    )
+    items, total = column_repository.get_multi_by_board(db, board_id=board_id, skip=skip, limit=limit)
     return list(items), total
 
 
@@ -31,9 +29,7 @@ def get_column(db: Session, *, column_id: int, current_user: User) -> Column | N
     return column
 
 
-def create_column(
-    db: Session, *, current_user: User, column_in: ColumnCreate
-) -> Column | None:
+def create_column(db: Session, *, current_user: User, column_in: ColumnCreate) -> Column | None:
     board = get_board(db, board_id=column_in.board_id, current_user=current_user)
     if board is None:
         return None
@@ -46,9 +42,7 @@ def create_column(
     return column_repository.create(db, data)
 
 
-def update_column(
-    db: Session, *, column_id: int, column_in: ColumnUpdate, current_user: User
-) -> Column | None:
+def update_column(db: Session, *, column_id: int, column_in: ColumnUpdate, current_user: User) -> Column | None:
     column = column_repository.get(db, column_id)
     if column is None:
         return None
@@ -79,5 +73,3 @@ def delete_column(db: Session, *, column_id: int, current_user: User) -> Column 
         return None
 
     return column_repository.remove(db, column_id)
-
-

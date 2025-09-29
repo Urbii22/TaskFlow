@@ -17,5 +17,3 @@ class BoardRepository(BaseRepository[Board]):
         total = query.count()
         items = query.offset(skip).limit(limit).all()
         return items, total
-
-

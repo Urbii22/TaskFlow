@@ -69,5 +69,3 @@ def delete_comment_endpoint(
     if comment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comentario no encontrado o sin permisos")
     return comment
-
-

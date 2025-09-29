@@ -115,10 +115,7 @@ def test_column_service_crud_and_permissions():
         )
         assert c2 and c2.name == "C2" and c2.position == 2
         # Update por otro -> None
-        assert (
-            update_column(db, column_id=c.id, column_in=ColumnUpdate(name="X"), current_user=other)
-            is None
-        )
+        assert update_column(db, column_id=c.id, column_in=ColumnUpdate(name="X"), current_user=other) is None
         # Delete por otro -> None
         assert delete_column(db, column_id=c.id, current_user=other) is None
         # Delete por owner -> OK
@@ -190,8 +187,10 @@ def test_task_service_crud_permissions_and_list_by_column():
             current_user=owner,
             assignee_id=owner.id,
         )
-        assert total_owner >= 1 and any(x.id == t.id for x in only_owner) and all(
-            (x.assignee_id == owner.id) for x in only_owner
+        assert (
+            total_owner >= 1
+            and any(x.id == t.id for x in only_owner)
+            and all((x.assignee_id == owner.id) for x in only_owner)
         )
 
         # Actualizar
@@ -204,10 +203,7 @@ def test_task_service_crud_permissions_and_list_by_column():
         assert t2 and t2.title == "T2" and str(t2.priority) == "TaskPriority.HIGH"
 
         # Update por otro -> None
-        assert (
-            update_task(db, task_id=t.id, task_in=TaskUpdate(title="X"), current_user=other)
-            is None
-        )
+        assert update_task(db, task_id=t.id, task_in=TaskUpdate(title="X"), current_user=other) is None
 
         # Delete por otro -> None
         assert delete_task(db, task_id=t.id, current_user=other) is None
@@ -217,5 +213,3 @@ def test_task_service_crud_permissions_and_list_by_column():
         assert removed and removed.id == t.id
     finally:
         gen.close()
-
-

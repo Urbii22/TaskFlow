@@ -90,7 +90,6 @@ def delete_board_endpoint(
     return board
 
 
-
 @router.get("/{board_id}/columns", response_model=Page[ColumnRead])
 @cache(expire=60, namespace="boards:columns", key_builder=default_key_builder)
 @limiter.limit("60/minute")
@@ -112,4 +111,3 @@ def list_board_columns_endpoint(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado o sin permisos")
     page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
     return Page[ColumnRead](items=list(items), total=total, page=page, size=pagination["limit"])
-

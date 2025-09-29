@@ -1,4 +1,3 @@
-
 from app.db.session import get_db
 from app.main import app as fastapi_app
 from app.models.task import TaskPriority
@@ -102,7 +101,6 @@ def test_task_repository_get_multi_by_column_ordered():
         gen.close()
 
 
-
 def test_task_repository_get_multi_by_column_filters():
     user_repo = UserRepository()
     board_repo = BoardRepository()
@@ -157,4 +155,3 @@ def test_task_repository_get_multi_by_column_filters():
         assert total == 1 and [t.id for t in tasks_high_assignee] == [t1.id]
     finally:
         gen.close()
-

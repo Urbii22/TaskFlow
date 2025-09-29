@@ -10,9 +10,7 @@ from app.services.column_service import get_column
 task_repository = TaskRepository()
 
 
-def create_task(
-    db: Session, *, current_user: User, column_id: int, task_in: TaskCreate
-) -> Task | None:
+def create_task(db: Session, *, current_user: User, column_id: int, task_in: TaskCreate) -> Task | None:
     column = get_column(db, column_id=column_id, current_user=current_user)
     if column is None:
         return None
@@ -44,9 +42,7 @@ def get_task(db: Session, *, task_id: int, current_user: User) -> Task | None:
     return task
 
 
-def update_task(
-    db: Session, *, task_id: int, task_in: TaskUpdate, current_user: User
-) -> Task | None:
+def update_task(db: Session, *, task_id: int, task_in: TaskUpdate, current_user: User) -> Task | None:
     task = task_repository.get(db, task_id)
     if task is None:
         return None
@@ -121,7 +117,6 @@ def get_tasks_by_column(
     return list(items), total
 
 
-
 def search_tasks(
     db: Session,
     *,
@@ -140,4 +135,3 @@ def search_tasks(
         limit=limit,
     )
     return list(items), total
-

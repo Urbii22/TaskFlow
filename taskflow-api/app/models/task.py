@@ -47,7 +47,6 @@ class Task(Base):
         order_by="Comment.created_at",
     )
 
-
     # Búsqueda de texto completo (PostgreSQL)
     # Fallback para SQLite en tests: compila a TEXT
     class TSVectorType(TypeDecorator):
@@ -62,4 +61,3 @@ class Task(Base):
             return dialect.type_descriptor(TEXT())
 
     search_vector: Mapped[str | None] = mapped_column(TSVectorType(), nullable=True, index=True)
-

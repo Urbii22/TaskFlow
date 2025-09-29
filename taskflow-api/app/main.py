@@ -18,6 +18,7 @@ from app.core.rate_limit import limiter
 
 setup_logging()
 
+
 def create_app() -> FastAPI:
     app = FastAPI(title="TaskFlow API")
 
@@ -60,5 +61,6 @@ def create_app() -> FastAPI:
         return {"app": "taskflow", "message": "OK"}
 
     return app
+
 
 app = create_app()

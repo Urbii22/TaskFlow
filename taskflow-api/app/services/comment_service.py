@@ -9,9 +9,7 @@ from app.services.task_service import get_task
 comment_repository = CommentRepository()
 
 
-def create_comment(
-    db: Session, *, current_user: User, comment_in: CommentCreate
-) -> Comment | None:
+def create_comment(db: Session, *, current_user: User, comment_in: CommentCreate) -> Comment | None:
     # Validar acceso a la tarea (ser dueño del tablero)
     task = get_task(db, task_id=comment_in.task_id, current_user=current_user)
     if task is None:
@@ -41,9 +39,7 @@ def get_comment(db: Session, *, comment_id: int, current_user: User) -> Comment 
     return comment
 
 
-def update_comment(
-    db: Session, *, comment_id: int, comment_in: CommentUpdate, current_user: User
-) -> Comment | None:
+def update_comment(db: Session, *, comment_id: int, comment_in: CommentUpdate, current_user: User) -> Comment | None:
     comment = comment_repository.get(db, comment_id)
     if comment is None:
         return None
@@ -72,5 +68,3 @@ def delete_comment(db: Session, *, comment_id: int, current_user: User) -> Comme
         return None
 
     return comment_repository.remove(db, comment_id)
-
-

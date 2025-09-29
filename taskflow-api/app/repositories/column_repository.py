@@ -13,13 +13,7 @@ class ColumnRepository(BaseRepository[Column]):
     def get_multi_by_board(
         self, db: Session, *, board_id: int, skip: int = 0, limit: int = 100
     ) -> Tuple[Sequence[Column], int]:
-        query = (
-            db.query(Column)
-            .filter(Column.board_id == board_id)
-            .order_by(Column.position)
-        )
+        query = db.query(Column).filter(Column.board_id == board_id).order_by(Column.position)
         total = query.count()
         items = query.offset(skip).limit(limit).all()
         return items, total
-
-

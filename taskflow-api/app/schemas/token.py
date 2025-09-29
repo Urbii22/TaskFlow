@@ -9,5 +9,3 @@ class Token(BaseModel):
 class TokenPayload(BaseModel):
     # sub = subject (p. ej., email del usuario)
     sub: str
-
-

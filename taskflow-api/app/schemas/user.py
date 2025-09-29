@@ -17,5 +17,3 @@ class UserRead(UserBase):
 
     # Permite crear el modelo desde instancias ORM (Pydantic v2)
     model_config = ConfigDict(from_attributes=True)
-
-

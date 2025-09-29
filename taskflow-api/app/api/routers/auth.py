@@ -42,5 +42,3 @@ def login(
 
     access_token = create_access_token({"sub": user.email})
     return Token(access_token=access_token, token_type="bearer")
-
-
