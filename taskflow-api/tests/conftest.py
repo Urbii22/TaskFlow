@@ -3,19 +3,18 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app as fastapi_app
-from app.db.base import Base
-from app.db.session import get_db
-from app.core.config import settings
-from app.core.cache import init_cache
+import app.models.board as _models_board  # noqa: F401
+import app.models.column as _models_column  # noqa: F401
+import app.models.comment as _models_comment  # noqa: F401
+import app.models.task as _models_task  # noqa: F401
 
 # Asegura el registro de modelos en Base.metadata
 import app.models.user as _models_user  # noqa: F401
-import app.models.board as _models_board  # noqa: F401
-import app.models.task as _models_task  # noqa: F401
-import app.models.comment as _models_comment  # noqa: F401
-import app.models.column as _models_column  # noqa: F401
-
+from app.core.cache import init_cache
+from app.core.config import settings
+from app.db.base import Base
+from app.db.session import get_db
+from app.main import app as fastapi_app
 
 # Configurar una BD SQLite en memoria compartida para pruebas
 test_engine = create_engine(

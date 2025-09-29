@@ -1,13 +1,11 @@
 from sqlalchemy.orm import Session
 
+from app.core.cache import invalidate_tasks_cache_for_user
 from app.models.task import Task, TaskPriority
 from app.models.user import User
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.column_service import get_column
-from app.schemas.pagination import Page
-from app.core.cache import invalidate_tasks_cache_for_user
-
 
 task_repository = TaskRepository()
 

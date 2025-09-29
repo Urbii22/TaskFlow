@@ -1,11 +1,11 @@
 from typing import Callable
 
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.backends.inmemory import InMemoryBackend
-from fastapi_cache.coder import JsonCoder
-import redis.asyncio as redis
 import anyio
+import redis.asyncio as redis
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.coder import JsonCoder
 
 from app.core.config import settings
 

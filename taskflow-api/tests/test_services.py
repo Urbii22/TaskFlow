@@ -1,36 +1,35 @@
 import pytest
 
-from app.main import app as fastapi_app
 from app.db.session import get_db
+from app.main import app as fastapi_app
+from app.models.task import TaskPriority
 from app.models.user import User
-from app.repositories.user_repository import UserRepository
-from app.services.user_service import create_user
+from app.schemas.board import BoardCreate, BoardUpdate
+from app.schemas.column import ColumnCreate, ColumnUpdate
+from app.schemas.task import TaskCreate, TaskUpdate
+from app.schemas.user import UserCreate
 from app.services.board_service import (
     create_board,
-    get_board,
-    get_all_boards_by_user,
-    update_board,
     delete_board,
+    get_all_boards_by_user,
+    get_board,
+    update_board,
 )
 from app.services.column_service import (
     create_column,
+    delete_column,
     get_column,
     get_columns_by_board,
     update_column,
-    delete_column,
 )
 from app.services.task_service import (
     create_task,
-    get_task,
-    update_task,
     delete_task,
+    get_task,
     get_tasks_by_column,
+    update_task,
 )
-from app.schemas.task import TaskCreate, TaskUpdate
-from app.models.task import TaskPriority
-from app.schemas.user import UserCreate
-from app.schemas.board import BoardCreate, BoardUpdate
-from app.schemas.column import ColumnCreate, ColumnUpdate
+from app.services.user_service import create_user
 
 
 def _get_db_session_for_test():

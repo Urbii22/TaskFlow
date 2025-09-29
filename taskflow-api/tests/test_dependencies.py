@@ -2,12 +2,12 @@ from datetime import timedelta
 
 import pytest
 from fastapi import HTTPException
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
-from app.main import app as fastapi_app
 from app.api.dependencies import get_current_user
-from app.db.session import get_db
 from app.core.security import create_access_token
+from app.db.session import get_db
+from app.main import app as fastapi_app
 
 
 def _get_db_session_for_test():

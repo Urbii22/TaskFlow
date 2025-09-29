@@ -1,6 +1,6 @@
-from fastapi import Depends, HTTPException, status, Query
+from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, ExpiredSignatureError, jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -8,8 +8,6 @@ from app.core.security import ALGORITHM
 from app.db.session import get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from fastapi import Request
-
 
 # Esquema OAuth2 para extraer el token Bearer del encabezado Authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")

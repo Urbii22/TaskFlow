@@ -1,5 +1,9 @@
-import logging, sys, structlog
+import logging
+import sys
+
+import structlog
 from pythonjsonlogger import jsonlogger
+
 
 def setup_logging():
     handler = logging.StreamHandler(sys.stdout)

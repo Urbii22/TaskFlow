@@ -5,7 +5,6 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate
 
-
 user_repository = UserRepository()
 
 

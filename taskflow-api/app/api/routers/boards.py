@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_pagination_params
+from app.core.cache import default_key_builder
+from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.board import BoardCreate, BoardRead, BoardUpdate
@@ -15,10 +18,6 @@ from app.services.board_service import (
     update_board,
 )
 from app.services.column_service import get_columns_by_board
-from app.core.rate_limit import limiter
-from fastapi_cache.decorator import cache
-from app.core.cache import default_key_builder
-
 
 router = APIRouter(prefix="/boards", tags=["boards"])
 
@@ -112,5 +111,5 @@ def list_board_columns_endpoint(
         if board is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tablero no encontrado o sin permisos")
     page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
-    return Page[ColumnRead](items=list(items), total=total, page=page, size=pagination["limit"]) 
+    return Page[ColumnRead](items=list(items), total=total, page=page, size=pagination["limit"])
 

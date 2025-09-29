@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
+from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentRead, CommentUpdate
@@ -11,8 +12,6 @@ from app.services.comment_service import (
     get_comment,
     update_comment,
 )
-from app.core.rate_limit import limiter
-
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 

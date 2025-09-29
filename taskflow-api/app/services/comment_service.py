@@ -6,7 +6,6 @@ from app.repositories.comment_repository import CommentRepository
 from app.schemas.comment import CommentCreate, CommentUpdate
 from app.services.task_service import get_task
 
-
 comment_repository = CommentRepository()
 
 

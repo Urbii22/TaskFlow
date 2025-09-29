@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
 import enum
+from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text, Enum, Integer
-from sqlalchemy.types import TypeDecorator, TEXT
+from sqlalchemy import Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+from sqlalchemy.types import TEXT, TypeDecorator
 
 from app.db.base import Base
 
@@ -28,7 +28,11 @@ class Task(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     column_id: Mapped[int] = mapped_column(ForeignKey("columns.id", ondelete="CASCADE"), nullable=False, index=True)
-    assignee_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    assignee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now(), nullable=False)

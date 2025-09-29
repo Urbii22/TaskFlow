@@ -5,7 +5,6 @@ from app.models.user import User
 from app.repositories.board_repository import BoardRepository
 from app.schemas.board import BoardCreate, BoardUpdate
 
-
 board_repository = BoardRepository()
 
 

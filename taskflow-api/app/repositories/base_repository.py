@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Generic, Iterable, Sequence, TypeVar, Type, Tuple
+from typing import Generic, Sequence, Tuple, Type, TypeVar
 
 from sqlalchemy.orm import Session
-
 
 ModelType = TypeVar("ModelType")
 

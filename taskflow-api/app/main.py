@@ -1,20 +1,20 @@
+from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from asgi_correlation_id import CorrelationIdMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi import _rate_limit_exceeded_handler
-from prometheus_fastapi_instrumentator import Instrumentator
 
-from app.core.logging import setup_logging
-from app.core.rate_limit import limiter
-from app.core.cache import init_cache
-from app.api.routers import health as health_router
 from app.api.routers import auth as auth_router
 from app.api.routers import boards as boards_router
 from app.api.routers import columns as columns_router
-from app.api.routers import tasks as tasks_router
 from app.api.routers import comments as comments_router
+from app.api.routers import health as health_router
+from app.api.routers import tasks as tasks_router
+from app.core.cache import init_cache
+from app.core.logging import setup_logging
+from app.core.rate_limit import limiter
 
 setup_logging()
 

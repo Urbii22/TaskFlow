@@ -1,0 +1,55 @@
+name: TaskFlow API CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: taskflow_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready" --health-interval=5s --health-timeout=5s --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r taskflow-api/requirements.txt
+
+      - name: Lint with ruff
+        run: |
+          cd taskflow-api
+          ruff check .
+          ruff format --check .
+
+      - name: Run tests
+        run: |
+          cd taskflow-api
+          export POSTGRES_HOST=localhost
+          export POSTGRES_PORT=5432
+          export POSTGRES_DB=taskflow_test
+          export POSTGRES_USER=testuser
+          export POSTGRES_PASSWORD=testpassword
+          export SECRET_KEY=test-secret
+          pytest
+
+

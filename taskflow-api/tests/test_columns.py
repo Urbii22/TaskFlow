@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app as fastapi_app
 
@@ -128,7 +128,7 @@ async def test_columns_crud_and_permissions():
         headers_a = {"Authorization": f"Bearer {token_a}"}
 
         board = (await ac.post("/api/v1/boards/", json={"name": "B"}, headers=headers_a)).json()
-        column = (
+        _column_obj = (
             await ac.post(
                 "/api/v1/columns/",
                 json={"name": "C1", "position": 1, "board_id": board["id"]},

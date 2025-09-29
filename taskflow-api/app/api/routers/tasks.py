@@ -1,18 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi import Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
-from app.api.dependencies import get_pagination_params
+from app.api.dependencies import get_current_user, get_pagination_params
+from app.core.cache import default_key_builder
+from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
-from app.services.task_service import create_task, delete_task, get_task, update_task, search_tasks
-from app.core.rate_limit import limiter
 from app.schemas.pagination import Page
-from fastapi_cache.decorator import cache
-from app.core.cache import default_key_builder
-
+from app.schemas.task import TaskCreate, TaskRead, TaskUpdate
+from app.services.task_service import create_task, delete_task, get_task, search_tasks, update_task
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -35,7 +32,7 @@ def search_tasks_endpoint(
         limit=pagination["limit"],
     )
     page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
-    return Page[TaskRead](items=list(items), total=total, page=page, size=pagination["limit"]) 
+    return Page[TaskRead](items=list(items), total=total, page=page, size=pagination["limit"])
 
 
 @router.post("/", response_model=TaskRead, status_code=status.HTTP_201_CREATED)

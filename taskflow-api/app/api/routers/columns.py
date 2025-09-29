@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_pagination_params
+from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.models.task import TaskPriority
 from app.models.user import User
 from app.schemas.column import ColumnCreate, ColumnRead, ColumnUpdate
+from app.schemas.pagination import Page
+from app.schemas.task import TaskRead
 from app.services.column_service import (
     create_column,
     delete_column,
@@ -12,11 +16,6 @@ from app.services.column_service import (
     update_column,
 )
 from app.services.task_service import get_tasks_by_column
-from app.core.rate_limit import limiter
-from app.schemas.task import TaskRead
-from app.schemas.pagination import Page
-from app.models.task import TaskPriority
-
 
 router = APIRouter(prefix="/columns", tags=["columns"])
 
@@ -102,6 +101,6 @@ def list_column_tasks_endpoint(
         if column is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Columna no encontrada o sin permisos")
     page = (pagination["skip"] // pagination["limit"]) + 1 if pagination["limit"] > 0 else 1
-    return Page[TaskRead](items=list(items), total=total, page=page, size=pagination["limit"]) 
+    return Page[TaskRead](items=list(items), total=total, page=page, size=pagination["limit"])
 
 

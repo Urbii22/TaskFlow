@@ -1,13 +1,12 @@
-import pytest
 
-from app.main import app as fastapi_app
 from app.db.session import get_db
-from app.repositories.user_repository import UserRepository
+from app.main import app as fastapi_app
+from app.models.task import TaskPriority
+from app.models.user import Role
 from app.repositories.board_repository import BoardRepository
 from app.repositories.column_repository import ColumnRepository
 from app.repositories.task_repository import TaskRepository
-from app.models.task import TaskPriority
-from app.models.user import Role
+from app.repositories.user_repository import UserRepository
 
 
 def _get_db_session_for_test():

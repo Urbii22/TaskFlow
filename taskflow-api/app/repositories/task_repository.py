@@ -1,13 +1,13 @@
-from typing import Sequence, Tuple
 import re
+from typing import Sequence, Tuple
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
 
+from app.models.board import Board
+from app.models.column import Column
 from app.models.task import Task, TaskPriority
 from app.repositories.base_repository import BaseRepository
-from app.models.column import Column
-from app.models.board import Board
 
 
 class TaskRepository(BaseRepository[Task]):

@@ -6,7 +6,6 @@ from app.repositories.column_repository import ColumnRepository
 from app.schemas.column import ColumnCreate, ColumnUpdate
 from app.services.board_service import get_board
 
-
 column_repository = ColumnRepository()
 
 
