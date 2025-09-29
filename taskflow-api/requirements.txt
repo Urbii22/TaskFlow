@@ -6,6 +6,7 @@ psycopg[binary]
 pydantic>=2
 pydantic-settings
 passlib[bcrypt]
+bcrypt<4
 python-jose[cryptography]
 email-validator
 redis
