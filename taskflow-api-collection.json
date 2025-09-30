@@ -1,0 +1,369 @@
+{
+  "info": {
+    "name": "TaskFlow API Collection",
+    "description": "Colección Postman para la API TaskFlow (FastAPI). Incluye auth, boards, columns, tasks, comments, health y metrics. Usa la variable {{api_base}} y {{base_url}} para construir las URLs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Root & Health",
+      "item": [
+        {
+          "name": "GET / (root)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/"
+          }
+        },
+        {
+          "name": "GET /api/v1/health",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": "{{api_base}}/health"
+          }
+        },
+        {
+          "name": "GET /metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "text/plain" }
+            ],
+            "url": "{{base_url}}/metrics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/v1/auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{api_base}}/auth/register"
+          }
+        },
+        {
+          "name": "POST /api/v1/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "user@example.com", "type": "text" },
+                { "key": "password", "value": "secret123", "type": "text" }
+              ]
+            },
+            "url": "{{api_base}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (data && data.access_token) {",
+                  "    pm.collectionVariables.set('token', data.access_token);",
+                  "    pm.test('Token guardado en variables de colección', function () { pm.expect(pm.collectionVariables.get('token')).to.be.a('string'); });",
+                  "  }",
+                  "} catch (e) { /* ignore */ }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Boards",
+      "item": [
+        {
+          "name": "POST /api/v1/boards/ (crear)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Proyecto Demo\"\n}"
+            },
+            "url": "{{api_base}}/boards/"
+          }
+        },
+        {
+          "name": "GET /api/v1/boards/ (listar)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/boards/?skip=0&limit=100"
+          }
+        },
+        {
+          "name": "GET /api/v1/boards/{board_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/boards/{{board_id}}"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/boards/{board_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Proyecto Demo v2\"\n}"
+            },
+            "url": "{{api_base}}/boards/{{board_id}}"
+          }
+        },
+        {
+          "name": "DELETE /api/v1/boards/{board_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/boards/{{board_id}}"
+          }
+        },
+        {
+          "name": "GET /api/v1/boards/{board_id}/columns (listar columnas del board)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/boards/{{board_id}}/columns?skip=0&limit=100"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Columns",
+      "item": [
+        {
+          "name": "POST /api/v1/columns/ (crear)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"To Do\",\n  \"position\": 1,\n  \"board_id\": {{board_id}}\n}"
+            },
+            "url": "{{api_base}}/columns/"
+          }
+        },
+        {
+          "name": "GET /api/v1/columns/{column_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/columns/{{column_id}}"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/columns/{column_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Backlog\",\n  \"position\": 2\n}"
+            },
+            "url": "{{api_base}}/columns/{{column_id}}"
+          }
+        },
+        {
+          "name": "DELETE /api/v1/columns/{column_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/columns/{{column_id}}"
+          }
+        },
+        {
+          "name": "GET /api/v1/columns/{column_id}/tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/columns/{{column_id}}/tasks?priority=&assignee_id=&skip=0&limit=100"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "GET /api/v1/tasks/ (search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/tasks/?q=T2&skip=0&limit=100"
+          }
+        },
+        {
+          "name": "POST /api/v1/tasks/ (crear)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tarea 1\",\n  \"description\": \"desc\",\n  \"priority\": \"MEDIUM\",\n  \"column_id\": {{column_id}}\n}"
+            },
+            "url": "{{api_base}}/tasks/"
+          }
+        },
+        {
+          "name": "GET /api/v1/tasks/{task_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/tasks/{{task_id}}"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/tasks/{task_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tarea 1 v2\",\n  \"priority\": \"HIGH\"\n}"
+            },
+            "url": "{{api_base}}/tasks/{{task_id}}"
+          }
+        },
+        {
+          "name": "DELETE /api/v1/tasks/{task_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/tasks/{{task_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "POST /api/v1/comments/ (crear)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_id\": {{task_id}},\n  \"author_id\": {{author_id}},\n  \"text\": \"Comentario\"\n}"
+            },
+            "url": "{{api_base}}/comments/"
+          }
+        },
+        {
+          "name": "GET /api/v1/comments/{comment_id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/comments/{{comment_id}}"
+          }
+        },
+        {
+          "name": "PATCH /api/v1/comments/{comment_id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Comentario editado\"\n}"
+            },
+            "url": "{{api_base}}/comments/{{comment_id}}"
+          }
+        },
+        {
+          "name": "DELETE /api/v1/comments/{comment_id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{api_base}}/comments/{{comment_id}}"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "api_base", "value": "http://localhost:8000/api/v1" },
+    { "key": "token", "value": "" },
+    { "key": "board_id", "value": "1" },
+    { "key": "column_id", "value": "1" },
+    { "key": "task_id", "value": "1" },
+    { "key": "comment_id", "value": "1" },
+    { "key": "author_id", "value": "1" }
+  ]
+}
+
+

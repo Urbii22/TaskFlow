@@ -117,6 +117,16 @@ docker compose run --rm api python -m app.db.seed
 - ReDoc: http://localhost:8000/redoc
 - Salud: http://localhost:8000/api/v1/health
 
+### Colección Postman/Insomnia
+
+- Se incluye una colección lista para usar: `taskflow-api-collection.json` en la raíz del repo.
+- Base URL por defecto: `http://localhost:8000` (variable `base_url`) y `http://localhost:8000/api/v1` (variable `api_base`).
+- Flujo sugerido:
+  1. Ejecuta `POST /api/v1/auth/register` y luego `POST /api/v1/auth/login`.
+  2. El login guarda automáticamente `{{token}}` en variables de colección.
+  3. Usa los endpoints protegidos (añaden `Authorization: Bearer {{token}}`).
+  4. Ajusta variables `board_id`, `column_id`, `task_id`, `comment_id` si deseas probar rutas específicas.
+
 > **Windows/PowerShell**: Si ves `no configuration file provided: not found`, ejecuta Alembic **desde /app** dentro del contenedor, o indica el archivo con `-c`:
 >
 > ```powershell
