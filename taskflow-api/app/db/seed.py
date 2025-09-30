@@ -24,12 +24,7 @@ def get_or_create_user(db: Session, *, email: str, password: str, role: Role = R
 
 
 def get_or_create_board(db: Session, *, owner_id: int, name: str) -> Board:
-    board = (
-        db.query(Board)
-        .filter(Board.owner_id == owner_id)
-        .filter(Board.name == name)
-        .first()
-    )
+    board = db.query(Board).filter(Board.owner_id == owner_id).filter(Board.name == name).first()
     if board:
         return board
     board = Board(name=name, owner_id=owner_id)
@@ -40,12 +35,7 @@ def get_or_create_board(db: Session, *, owner_id: int, name: str) -> Board:
 
 
 def get_or_create_column(db: Session, *, board_id: int, name: str, position: int) -> Column:
-    column = (
-        db.query(Column)
-        .filter(Column.board_id == board_id)
-        .filter(Column.name == name)
-        .first()
-    )
+    column = db.query(Column).filter(Column.board_id == board_id).filter(Column.name == name).first()
     if column:
         return column
     column = Column(name=name, position=position, board_id=board_id)
@@ -65,12 +55,7 @@ def get_or_create_task(
     position: int,
     assignee_id: int | None,
 ) -> Task:
-    task = (
-        db.query(Task)
-        .filter(Task.column_id == column_id)
-        .filter(Task.title == title)
-        .first()
-    )
+    task = db.query(Task).filter(Task.column_id == column_id).filter(Task.title == title).first()
     if task:
         return task
     task = Task(
@@ -113,8 +98,7 @@ def seed_demo_data(db: Session) -> None:
 
     for board in boards:
         columns: list[Column] = [
-            get_or_create_column(db, board_id=board.id, name=name, position=pos)
-            for name, pos in default_columns
+            get_or_create_column(db, board_id=board.id, name=name, position=pos) for name, pos in default_columns
         ]
 
         # Tareas de ejemplo por columna con distintas prioridades y asignaciones
@@ -188,5 +172,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

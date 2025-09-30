@@ -30,5 +30,3 @@ def downgrade() -> None:
     op.drop_column("comments", "deleted_at")
     op.drop_column("tasks", "deleted_at")
     op.drop_column("boards", "deleted_at")
-
-
