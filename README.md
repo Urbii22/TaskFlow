@@ -18,12 +18,21 @@ API de gestión de tareas/kanban con usuarios, roles y métricas. Pensada para p
 - **Auditoría**: `created_at`, `updated_at` y **soft delete**.
 - **Rate limit** básico por IP (ej. 60 req/min) con `slowapi` (configurable por env).
 - **Caché** de listados con Redis (invalidación por cambios).
-- **Salud & Métricas**: `GET /health` y `GET /metrics` para Prometheus.
+- **Salud & Métricas**: `GET /api/v1/health` y `GET /metrics` para Prometheus.
 - **OpenAPI**: `/docs` (Swagger) y `/redoc`.
 
 ---
 
 ## 🗺️ Arquitectura
+
+```mermaid
+flowchart LR
+  A[Cliente] --> B[FastAPI (Routers)]
+  B --> C[Servicios (Dominio)]
+  C --> D[Repositorios (SQLAlchemy)]
+  D --> E[(PostgreSQL)]
+  C --> F[(Redis - Caché)]
+```
 
 ```
 app/
@@ -43,7 +52,7 @@ app/
 ├─ db/
 │  ├─ base.py          # Base = declarative_base()
 │  ├─ session.py       # sessionmaker / engine
-│  └─ init_data.py     # seed opcional
+│  └─ seed.py          # seed opcional
 ├─ models/             # SQLAlchemy models
 ├─ repositories/       # capa de acceso a datos
 ├─ schemas/            # Pydantic models (request/response)
@@ -87,6 +96,7 @@ DEBUG=True
 2) Build + levantar servicios:
 
 ```bash
+cd taskflow-api
 docker compose up -d --build
 ```
 
@@ -95,17 +105,17 @@ docker compose up -d --build
 ```bash
 # crear estructura (si aún no existen migraciones)
 docker compose run --rm api bash -lc "alembic revision --autogenerate -m 'init'"
-# aplicar migraciones
+# aplicar migraciones (normalmente se aplican automáticamente al levantar la API)
 docker compose run --rm api bash -lc "alembic upgrade head"
-# seed de datos (si existe el script)
-docker compose run --rm api python -m app.db.init_data
+# seed de datos (opcional)
+docker compose run --rm api python -m app.db.seed
 ```
 
 4) Abre la API:
 
 - Swagger: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
-- Salud: http://localhost:8000/health
+- Salud: http://localhost:8000/api/v1/health
 
 > **Windows/PowerShell**: Si ves `no configuration file provided: not found`, ejecuta Alembic **desde /app** dentro del contenedor, o indica el archivo con `-c`:
 >
@@ -113,6 +123,8 @@ docker compose run --rm api python -m app.db.init_data
 > docker compose run --rm api bash -lc "cd /app && alembic -c alembic.ini upgrade head"
 > # o
 > docker compose run --rm api bash -lc "alembic -c /app/alembic.ini upgrade head"
+> # seed opcional
+> docker compose run --rm api python -m app.db.seed
 > ```
 
 ### Opción B) Local (sin Docker)
@@ -120,6 +132,7 @@ docker compose run --rm api python -m app.db.init_data
 1) Crear entorno y deps
 
 ```bash
+cd taskflow-api
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -158,6 +171,24 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
+
+## 🚢 Despliegue a producción
+
+Recomendado usar Docker Compose con Postgres y Redis gestionados.
+
+- Establece `ENV=prod`, `DEBUG=false` y un `SECRET_KEY` fuerte y único.
+- Revisa los `ports` publicados en `docker-compose.yml` y usa un proxy reverso (Nginx/Caddy) con TLS.
+- Ajusta CORS si vas a exponer la API públicamente (ver nota más abajo).
+- Considera aumentar workers: `uvicorn --workers 2` o usar `gunicorn -k uvicorn.workers.UvicornWorker -w 2`.
+- Configura backups de Postgres y retención de logs.
+
+Ejemplo mínimo:
+
+```bash
+cd taskflow-api
+SECRET_KEY=$(openssl rand -hex 32) \
+ENV=prod DEBUG=false docker compose up -d --build
+```
 
 ## 🔑 Variables de entorno (`.env`)
 
@@ -246,6 +277,25 @@ Nota: si ves el error "[Errno 11001] getaddrinfo failed" al ejecutar Alembic en 
 - Usa `Authorization: Bearer <token>` en endpoints protegidos.
 - Rutas de administración requieren `role=admin`.
 
+### Ejemplos rápidos
+
+```bash
+# Registro
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@taskflow.dev","password":"user1234"}'
+
+# Login (OAuth2 Password)
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=user@taskflow.dev&password=user1234" | jq -r .access_token)
+
+# Crear tablero
+curl -X POST http://localhost:8000/api/v1/boards \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Proyecto Demo"}'
+```
+
 Ejemplo login:
 
 ```bash
@@ -254,23 +304,51 @@ curl -X POST http://localhost:8000/api/v1/auth/login   -H "Content-Type: applica
 
 ---
 
-## 📚 Endpoints principales (v1)
+## 📚 Tabla de Endpoints (v1)
 
-- **Boards**: `/api/v1/boards`  
-  - `POST` crear, `GET` listar (paginado), `GET /{id}`, `PATCH /{id}`, `DELETE /{id}` (soft)
-- **Columns**: `/api/v1/boards/{board_id}/columns`
-- **Tasks**: `/api/v1/tasks`
-  - Filtros: `status`, `priority`, `labels`, `assignee_id`, `board_id`, `column_id`
-  - Paginación: `limit`, `offset` · Ordenación: `sort` (p.ej. `-created_at`, `priority`)
-  - Búsqueda: `q` (texto libre)
-- **Comments**: `/api/v1/tasks/{task_id}/comments`
-- **Health**: `/health` · **Métricas**: `/metrics`
+| Método | Ruta | Descripción | Auth | Roles |
+|---|---|---|---|---|
+| GET | `/api/v1/health` | Ping de salud | No | N/A |
+| GET | `/metrics` | Métricas Prometheus | No | N/A |
+| POST | `/api/v1/auth/register` | Registrar usuario | No | N/A |
+| POST | `/api/v1/auth/login` | Login (OAuth2 Password) → JWT | No | N/A |
+| POST | `/api/v1/boards` | Crear tablero | Sí (Bearer) | USER, ADMIN |
+| GET | `/api/v1/boards` | Listar tableros del usuario (paginado) | Sí | USER, ADMIN |
+| GET | `/api/v1/boards/{board_id}` | Obtener tablero (propio) | Sí | USER, ADMIN |
+| PATCH | `/api/v1/boards/{board_id}` | Actualizar tablero (propio) | Sí | USER, ADMIN |
+| DELETE | `/api/v1/boards/{board_id}` | Eliminar tablero (soft, propio) | Sí | USER, ADMIN |
+| GET | `/api/v1/boards/{board_id}/columns` | Listar columnas de un tablero | Sí | USER, ADMIN |
+| POST | `/api/v1/columns` | Crear columna en tablero propio | Sí | USER, ADMIN |
+| GET | `/api/v1/columns/{column_id}` | Obtener columna (propia) | Sí | USER, ADMIN |
+| PATCH | `/api/v1/columns/{column_id}` | Actualizar columna (propia) | Sí | USER, ADMIN |
+| DELETE | `/api/v1/columns/{column_id}` | Eliminar columna (propia) | Sí | USER, ADMIN |
+| GET | `/api/v1/columns/{column_id}/tasks` | Listar tareas de la columna | Sí | USER, ADMIN |
+| GET | `/api/v1/tasks?q=...` | Buscar tareas del usuario (paginado) | Sí | USER, ADMIN |
+| POST | `/api/v1/tasks` | Crear tarea | Sí | USER, ADMIN |
+| GET | `/api/v1/tasks/{task_id}` | Obtener tarea (propia) | Sí | USER, ADMIN |
+| PATCH | `/api/v1/tasks/{task_id}` | Actualizar tarea (propia) | Sí | USER, ADMIN |
+| DELETE | `/api/v1/tasks/{task_id}` | Eliminar tarea (propia) | Sí | USER, ADMIN |
+| POST | `/api/v1/comments` | Crear comentario (autor=usuario actual) | Sí | USER, ADMIN |
+| GET | `/api/v1/comments/{comment_id}` | Obtener comentario (autor o dueño del tablero) | Sí | USER, ADMIN |
+| PATCH | `/api/v1/comments/{comment_id}` | Actualizar comentario (solo autor) | Sí | USER, ADMIN |
+| DELETE | `/api/v1/comments/{comment_id}` | Eliminar comentario (solo autor) | Sí | USER, ADMIN |
 
-Ejemplo listado con filtros:
+### Paginación
 
-```bash
-curl "http://localhost:8000/api/v1/tasks?board_id=1&status=todo&priority=high&labels=bug,backend&limit=20&offset=0&sort=-created_at"   -H "Authorization: Bearer $TOKEN"
-```
+- Esquema de respuesta: `Page[T]` con campos `items`, `total`, `page`, `size`.
+- Parámetros: `skip` (offset) y `limit` (tamaño de página). Cálculo de `page` basado en `skip/limit`.
+
+### Rate limiting
+
+- Límite por endpoint usando `slowapi` (ver decoradores `@limiter.limit`).
+- Clave de rate limit: IP remota; en `DEBUG` puede usar `X-RateLimit-Key` o `X-Request-ID`.
+- Respuesta al exceder: 429 Too Many Requests.
+
+### Caché HTTP (aplicación)
+
+- Caché de respuestas con `fastapi-cache`: ver decorador `@cache` en listados/búsquedas.
+- TTL típico 60s; la clave incluye `path`, `query` y `user.id` (si autenticado).
+- Invalidación tras cambios de tareas: se limpian namespaces `tasks:get` y `tasks:search`.
 
 ---
 
@@ -290,13 +368,31 @@ docker compose run --rm api ruff format .
 
 Opcional: hooks con **pre-commit** (`pre-commit install`).
 
+### Convenciones de errores
+
+- 400: validación de entrada o reglas de dominio (por ejemplo, email duplicado).
+- 401: sin token válido (`WWW-Authenticate: Bearer`).
+- 403: sin permisos (si se implementa distinción futura admin/propietario).
+- 404: recurso inexistente o sin acceso (evita filtrar información).
+- 429: límite de peticiones excedido.
+
+Formato de error típico:
+
+```json
+{ "detail": "Mensaje de error" }
+```
+
 ---
 
 ## 📈 Observabilidad
 
-- **/health**: OK si DB responde.
+- **/api/v1/health**: OK si DB responde (chequeo ligero).
 - **/metrics**: exposición para Prometheus (si habilitado).
 - Logging estructurado JSON opcional via `LOG_LEVEL`.
+
+Cabeceras útiles:
+
+- `X-Request-ID`: ID de correlación por petición (útil para trazas/logs).
 
 ---
 
@@ -331,14 +427,14 @@ docker compose run --rm api bash -lc "cd /app && alembic upgrade head"
 
 ```Makefile
 .PHONY: up down build logs api pytest migrate seed
-up: ; docker compose up -d
-down: ; docker compose down
-build: ; docker compose build --no-cache
-logs: ; docker compose logs -f api
-migrate: ; docker compose run --rm api bash -lc "cd /app && alembic upgrade head"
-seed: ; docker compose run --rm api python -m app.db.init_data
-pytest: ; docker compose run --rm api pytest -q
-api: ; docker compose run --rm --service-ports api bash
+up: ; cd taskflow-api && docker compose up -d
+down: ; cd taskflow-api && docker compose down
+build: ; cd taskflow-api && docker compose build --no-cache
+logs: ; cd taskflow-api && docker compose logs -f api
+migrate: ; cd taskflow-api && docker compose run --rm api bash -lc "cd /app && alembic upgrade head"
+seed: ; cd taskflow-api && docker compose run --rm api python -m app.db.seed
+pytest: ; cd taskflow-api && docker compose run --rm api pytest -q
+api: ; cd taskflow-api && docker compose run --rm --service-ports api bash
 ```
 
 ---
@@ -386,6 +482,21 @@ jobs:
 - Notificaciones (email/webhook)
 - RBAC más granular por board
 - Export/Import (JSON/CSV)
+
+## 🤝 Contribución
+
+1. Haz fork y crea una rama: `feat/nombre-corto`.
+2. Instala dependencias y levanta servicios con Docker.
+3. Asegura que los tests pasan y añade nuevos si corresponde.
+4. Ejecuta linters/formatters si están configurados.
+5. Abre PR describiendo el cambio, motivación y capturas si aplica.
+
+## 🔒 Seguridad
+
+- Nunca commitees `.env` con secretos reales.
+- Cambia `SECRET_KEY` en producción.
+- Limita orígenes en CORS (`CORS_ORIGINS`) para frontend conocido.
+- Usa HTTPS en despliegues públicos.
 
 ---
 
