@@ -15,3 +15,7 @@ lint:
 
 format:
 	docker compose run --rm api ruff format .
+
+seed:
+	docker compose build api
+	docker compose run --rm api sh -c "alembic upgrade head && python -m app.db.seed"

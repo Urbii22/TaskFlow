@@ -13,7 +13,7 @@ class BoardRepository(BaseRepository[Board]):
     def get_multi_by_owner(
         self, db: Session, *, owner_id: int, skip: int = 0, limit: int = 100
     ) -> Tuple[Sequence[Board], int]:
-        query = db.query(Board).filter(Board.owner_id == owner_id)
+        query = db.query(Board).filter(Board.owner_id == owner_id, Board.deleted_at.is_(None))
         total = query.count()
         items = query.offset(skip).limit(limit).all()
         return items, total

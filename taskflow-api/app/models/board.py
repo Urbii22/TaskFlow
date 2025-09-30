@@ -16,6 +16,7 @@ class Board(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Relaciones
     owner = relationship("User", back_populates="boards")

@@ -36,6 +36,7 @@ class Task(Base):
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now(), nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Relaciones
     column = relationship("Column", back_populates="tasks")

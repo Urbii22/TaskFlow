@@ -24,7 +24,7 @@ class TaskRepository(BaseRepository[Task]):
         priority: TaskPriority | None = None,
         assignee_id: int | None = None,
     ) -> Tuple[Sequence[Task], int]:
-        query = db.query(Task).filter(Task.column_id == column_id)
+        query = db.query(Task).filter(Task.column_id == column_id, Task.deleted_at.is_(None))
         if priority is not None:
             query = query.filter(Task.priority == priority)
         if assignee_id is not None:
@@ -55,6 +55,7 @@ class TaskRepository(BaseRepository[Task]):
                 .join(Column, Task.column_id == Column.id)
                 .join(Board, Column.board_id == Board.id)
                 .filter(Board.owner_id == owner_id)
+                .filter(Task.deleted_at.is_(None))
                 .filter((Task.title.ilike(like_term)) | (Task.description.ilike(like_term)))
                 .order_by(Task.id.desc())
             )
@@ -65,6 +66,7 @@ class TaskRepository(BaseRepository[Task]):
                 .join(Column, Task.column_id == Column.id)
                 .join(Board, Column.board_id == Board.id)
                 .filter(Board.owner_id == owner_id)
+                .filter(Task.deleted_at.is_(None))
                 .filter(Task.search_vector.op("@@")(ts_query))
                 .order_by(Task.id.desc())
             )

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Generic, Sequence, Tuple, Type, TypeVar
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -12,10 +13,18 @@ class BaseRepository(Generic[ModelType]):
         self.model = model
 
     def get(self, db: Session, id: int) -> ModelType | None:
-        return db.get(self.model, id)
+        obj = db.get(self.model, id)
+        if obj is None:
+            return None
+        # Excluir registros soft-deleted si el modelo tiene el atributo
+        if hasattr(self.model, "deleted_at") and getattr(obj, "deleted_at", None) is not None:
+            return None
+        return obj
 
     def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> Tuple[Sequence[ModelType], int]:
         query = db.query(self.model)
+        if hasattr(self.model, "deleted_at"):
+            query = query.filter(self.model.deleted_at.is_(None))
         total = query.count()
         items = query.offset(skip).limit(limit).all()
         return items, total
@@ -39,6 +48,11 @@ class BaseRepository(Generic[ModelType]):
         obj = db.get(self.model, id)
         if obj is None:
             return None
-        db.delete(obj)
+        # Soft delete si el modelo tiene deleted_at, si no, borrar físicamente
+        if hasattr(self.model, "deleted_at"):
+            setattr(obj, "deleted_at", datetime.now(timezone.utc))
+            db.add(obj)
+        else:
+            db.delete(obj)
         db.commit()
         return obj

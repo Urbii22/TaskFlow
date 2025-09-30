@@ -17,6 +17,7 @@ class Comment(Base):
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Relaciones
     task = relationship("Task", back_populates="comments")

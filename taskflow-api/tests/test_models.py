@@ -12,7 +12,7 @@ def _get_db_session_for_test():
     return db, gen
 
 
-def test_cascade_delete_board_deletes_columns():
+def test_soft_delete_board_hides_board():
     user_repo = UserRepository()
     board_repo = BoardRepository()
     column_repo = ColumnRepository()
@@ -23,11 +23,11 @@ def test_cascade_delete_board_deletes_columns():
         board = board_repo.create(db, {"name": "B", "owner_id": user.id})
         col = column_repo.create(db, {"name": "C1", "position": 1, "board_id": board.id})
 
-        # Borrar board
+        # Borrar (soft delete) board
         board_repo.remove(db, board.id)
 
-        # Confirmar que la columna se eliminó por cascade
-        assert column_repo.get(db, col.id) is None
+        # Confirmar que el board ya no es accesible por el repositorio
+        assert board_repo.get(db, board.id) is None
     finally:
         gen.close()
 
