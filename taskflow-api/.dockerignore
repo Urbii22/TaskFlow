@@ -38,6 +38,5 @@ venv/
 Thumbs.db
 
 # Project-specific
-tests/
 docker-compose.yml
 

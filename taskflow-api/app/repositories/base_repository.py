@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Generic, Sequence, Tuple, Type, TypeVar
 from datetime import datetime, timezone
+from typing import Generic, Sequence, Tuple, Type, TypeVar
 
 from sqlalchemy.orm import Session
 

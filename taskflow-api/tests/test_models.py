@@ -21,7 +21,7 @@ def test_soft_delete_board_hides_board():
     try:
         user = user_repo.create(db, {"email": "cascade@example.com", "password_hash": "h"})
         board = board_repo.create(db, {"name": "B", "owner_id": user.id})
-        col = column_repo.create(db, {"name": "C1", "position": 1, "board_id": board.id})
+        column_repo.create(db, {"name": "C1", "position": 1, "board_id": board.id})
 
         # Borrar (soft delete) board
         board_repo.remove(db, board.id)
