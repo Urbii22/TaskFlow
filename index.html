@@ -39,7 +39,7 @@
         </form>
 
         <div class="mt-4 text-center text-sm">
-          <a id="toggle-auth" href="#" class="text-indigo-400 hover:text-indigo-300">¿No tienes cuenta? Crear una</a>
+          <a id="toggle-auth" href="#" class="text-indigo-400 hover:text-indigo-300">¿No tienes cuenta? Regístrate</a>
         </div>
       </div>
     </div>
@@ -59,6 +59,35 @@
         </main>
       </div>
     </div>
+    <script>
+      (function () {
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const toggleLink = document.getElementById('toggle-auth');
+
+        function showLogin() {
+          loginForm.classList.remove('hidden');
+          registerForm.classList.add('hidden');
+          toggleLink.textContent = '¿No tienes cuenta? Regístrate';
+        }
+
+        function showRegister() {
+          registerForm.classList.remove('hidden');
+          loginForm.classList.add('hidden');
+          toggleLink.textContent = '¿Ya tienes cuenta? Inicia sesión';
+        }
+
+        toggleLink.addEventListener('click', function (e) {
+          e.preventDefault();
+          const isLoginVisible = !loginForm.classList.contains('hidden');
+          if (isLoginVisible) {
+            showRegister();
+          } else {
+            showLogin();
+          }
+        });
+      })();
+    </script>
   </body>
   
 </html>
