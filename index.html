@@ -64,14 +64,69 @@
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
         const toggleLink = document.getElementById('toggle-auth');
+        const authPage = document.getElementById('auth-page');
+        const mainAppPage = document.getElementById('main-app-page');
+        const authError = document.getElementById('auth-error');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const registerEmail = document.getElementById('register-email');
+        const registerPassword = document.getElementById('register-password');
+
+        const API_BASE_URL = 'http://localhost:8000/api/v1';
+
+        const apiClient = {
+          async register(email, password) {
+            const res = await fetch(`${API_BASE_URL}/auth/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.detail || 'Error al registrarse');
+            }
+            return res.json();
+          },
+          async login(email, password) {
+            const form = new URLSearchParams();
+            form.set('username', email);
+            form.set('password', password);
+            // OAuth2PasswordRequestForm también admite scope, client_id, etc. no necesarios aquí
+            const res = await fetch(`${API_BASE_URL}/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: form.toString()
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.detail || 'Credenciales inválidas');
+            }
+            return res.json();
+          }
+        };
+
+        function showError(message) {
+          if (!message) return;
+          authError.textContent = message;
+          authError.classList.remove('hidden');
+        }
+
+        function clearError() {
+          authError.textContent = '';
+          authError.classList.add('hidden');
+        }
 
         function showLogin() {
+          clearError();
           loginForm.classList.remove('hidden');
           registerForm.classList.add('hidden');
           toggleLink.textContent = '¿No tienes cuenta? Regístrate';
         }
 
         function showRegister() {
+          clearError();
           registerForm.classList.remove('hidden');
           loginForm.classList.add('hidden');
           toggleLink.textContent = '¿Ya tienes cuenta? Inicia sesión';
@@ -86,6 +141,80 @@
             showLogin();
           }
         });
+
+        function saveToken(token) {
+          try { localStorage.setItem('taskflow_token', token); } catch (_) {}
+        }
+
+        function getToken() {
+          try { return localStorage.getItem('taskflow_token'); } catch (_) { return null; }
+        }
+
+        function showMain() {
+          authPage.classList.add('hidden');
+          mainAppPage.classList.remove('hidden');
+        }
+
+        function showAuth() {
+          mainAppPage.classList.add('hidden');
+          authPage.classList.remove('hidden');
+        }
+
+        function render() {
+          if (getToken()) {
+            showMain();
+          } else {
+            showAuth();
+          }
+        }
+
+        // Listeners de autenticación
+        loginForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          clearError();
+          const email = (loginEmail.value || '').trim();
+          const password = loginPassword.value || '';
+          try {
+            const data = await apiClient.login(email, password);
+            saveToken(data.access_token);
+            render();
+          } catch (err) {
+            showError(err.message || 'Error al iniciar sesión');
+          }
+        });
+
+        registerForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          clearError();
+          const email = (registerEmail.value || '').trim();
+          const password = registerPassword.value || '';
+          try {
+            await apiClient.register(email, password);
+            const data = await apiClient.login(email, password);
+            saveToken(data.access_token);
+            render();
+          } catch (err) {
+            showError(err.message || 'Error al registrarse');
+          }
+        });
+
+        function clearToken() {
+          try { localStorage.removeItem('taskflow_token'); } catch (_) {}
+        }
+        // Cierre de sesión
+        logoutBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          clearError();
+          clearToken();
+          render();
+        });
+
+        // Estado inicial según token existente
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', render);
+        } else {
+          render();
+        }
       })();
     </script>
   </body>
