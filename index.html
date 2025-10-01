@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TaskFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-900 text-gray-100">
+    <!-- Página de Autenticación -->
+    <div id="auth-page" class="min-h-screen w-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-6">
+        <h1 class="text-2xl font-semibold text-center mb-6">TaskFlow</h1>
+
+        <div id="auth-error" class="hidden mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-300 text-sm"></div>
+
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label for="login-email" class="block text-sm mb-1">Email</label>
+            <input id="login-email" type="email" required class="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="tu@correo.com" />
+          </div>
+          <div>
+            <label for="login-password" class="block text-sm mb-1">Contraseña</label>
+            <input id="login-password" type="password" required class="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" />
+          </div>
+          <button type="submit" class="w-full rounded-md bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-medium">Iniciar Sesión</button>
+        </form>
+
+        <form id="register-form" class="space-y-4 hidden mt-6">
+          <div>
+            <label for="register-email" class="block text-sm mb-1">Email</label>
+            <input id="register-email" type="email" required class="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="tu@correo.com" />
+          </div>
+          <div>
+            <label for="register-password" class="block text-sm mb-1">Contraseña</label>
+            <input id="register-password" type="password" required class="w-full rounded-md bg-gray-900 border border-gray-700 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" />
+          </div>
+          <button type="submit" class="w-full rounded-md bg-green-600 hover:bg-green-500 px-4 py-2 text-sm font-medium">Registrarse</button>
+        </form>
+
+        <div class="mt-4 text-center text-sm">
+          <a id="toggle-auth" href="#" class="text-indigo-400 hover:text-indigo-300">¿No tienes cuenta? Crear una</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Página principal de la aplicación -->
+    <div id="main-app-page" class="h-screen w-screen hidden">
+      <div class="flex flex-col h-full">
+        <header class="px-4 py-3 border-b border-gray-800 flex items-center gap-3">
+          <h2 class="text-lg font-semibold flex-1">TaskFlow</h2>
+          <select id="board-select" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Selecciona un tablero</option>
+          </select>
+          <button id="logout-btn" class="ml-2 rounded-md bg-red-600 hover:bg-red-500 px-3 py-2 text-sm">Cerrar Sesión</button>
+        </header>
+        <main class="flex-1 overflow-auto p-4">
+          <!-- Contenido de la app -->
+        </main>
+      </div>
+    </div>
+  </body>
+  
+</html>
+
+
