@@ -90,6 +90,9 @@
             <select id="board-selector" class="min-w-60 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
               <option value="" disabled selected>Selecciona un tablero</option>
             </select>
+            <button id="create-column-btn" type="button" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:opacity-50" disabled>
+              Crear columna
+            </button>
           </div>
 
           <div id="empty-state" class="hidden rounded-lg border border-dashed border-slate-300 p-8 text-center">
@@ -106,6 +109,81 @@
 
           <div id="kanban-container" class="mt-6"></div>
         </section>
+        
+        <!-- Modales -->
+        <!-- Modal Crear Tablero -->
+        <div id="board-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 class="text-lg font-semibold text-slate-800">Crear tablero</h3>
+            <form id="board-form" class="mt-4 space-y-3">
+              <div>
+                <label for="board-name-input" class="block text-sm font-medium text-slate-700">Nombre</label>
+                <input id="board-name-input" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-modal-close="board-modal" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50">Cancelar</button>
+                <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500">Crear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Crear Columna -->
+        <div id="column-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 class="text-lg font-semibold text-slate-800">Crear columna</h3>
+            <form id="column-form" class="mt-4 space-y-3">
+              <input id="column-board-id-input" type="hidden" />
+              <div>
+                <label for="column-name-input" class="block text-sm font-medium text-slate-700">Nombre</label>
+                <input id="column-name-input" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label for="column-position-input" class="block text-sm font-medium text-slate-700">Posición</label>
+                <input id="column-position-input" type="number" min="0" value="0" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div class="flex justify-end gap-2 pt-2">
+                <button type="button" data-modal-close="column-modal" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50">Cancelar</button>
+                <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500">Crear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Modal Crear/Editar Tarea -->
+        <div id="task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 id="task-modal-title" class="text-lg font-semibold text-slate-800">Tarea</h3>
+            <form id="task-form" class="mt-4 space-y-3">
+              <input id="task-id-input" type="hidden" />
+              <input id="task-column-id-input" type="hidden" />
+              <div>
+                <label for="task-title-input" class="block text-sm font-medium text-slate-700">Título</label>
+                <input id="task-title-input" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label for="task-desc-input" class="block text-sm font-medium text-slate-700">Descripción</label>
+                <textarea id="task-desc-input" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" rows="3"></textarea>
+              </div>
+              <div>
+                <label for="task-priority-input" class="block text-sm font-medium text-slate-700">Prioridad</label>
+                <select id="task-priority-input" class="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" required>
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM" selected>MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="CRITICAL">CRITICAL</option>
+                </select>
+              </div>
+              <div class="flex justify-between gap-2 pt-2">
+                <button type="button" id="task-delete-btn" class="hidden rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-red-700 shadow-sm hover:bg-red-50">Eliminar</button>
+                <div class="ml-auto flex gap-2">
+                  <button type="button" data-modal-close="task-modal" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm hover:bg-slate-50">Cancelar</button>
+                  <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500">Guardar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       </main>
     </div>
     <script type="module" src="./apiClient.js"></script>

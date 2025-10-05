@@ -1,4 +1,4 @@
-import { getBoards, getBoardColumns, getTasksByColumn } from './apiClient.js';
+import { getBoards, getBoardColumns, getTasksByColumn, createBoard, createColumn, createTask, updateTask, deleteTask } from './apiClient.js';
 
 // Utilidades simples de token; en un caso real vendría de login y storage
 function getToken() {
@@ -56,6 +56,21 @@ function hide(el) {
   el.classList.add('hidden');
 }
 
+// Estado actual del tablero cargado
+let currentBoardId = null;
+let currentColumns = [];
+let draggedTask = null;
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
 export async function initializeDashboard() {
   const token = getToken();
   const selector = $('#board-selector');
@@ -96,6 +111,8 @@ export async function initializeDashboard() {
     // Autocargar el primero
     selector.value = String(items[0].id);
     await loadBoard(items[0].id);
+    const createColumnBtn = $('#create-column-btn');
+    if (createColumnBtn) createColumnBtn.disabled = false;
   } catch (err) {
     container.innerHTML = `<p class="text-sm text-red-600">Error al cargar tableros: ${err?.message ?? err}</p>`;
   }
@@ -128,6 +145,10 @@ export async function loadBoard(boardId) {
       col.tasks.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
     }
 
+    // Guardar estado actual
+    currentBoardId = boardId;
+    currentColumns = columnsWithTasks;
+
     renderKanbanBoard(columnsWithTasks);
   } catch (err) {
     container.innerHTML = `<p class="text-sm text-red-600">Error al cargar el tablero: ${err?.message ?? err}</p>`;
@@ -153,12 +174,51 @@ export function renderKanbanBoard(columns) {
     header.className = 'mb-3 flex items-center justify-between';
     header.innerHTML = `
       <h3 class="font-semibold text-slate-800">${col.name}</h3>
-      <span class="text-xs text-slate-500">${Array.isArray(col.tasks) ? col.tasks.length : 0} tareas</span>
+      <div class="flex items-center gap-2">
+        <span class="task-count text-xs text-slate-500">${Array.isArray(col.tasks) ? col.tasks.length : 0} tareas</span>
+        <button type="button" class="add-task-btn rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 shadow-sm hover:bg-slate-50" data-column-id="${col.id}">+ Tarea</button>
+      </div>
     `;
     colEl.appendChild(header);
 
     const list = document.createElement('div');
-    list.className = 'space-y-2';
+    list.className = 'space-y-2 min-h-[20px]';
+    list.dataset.columnId = String(col.id);
+    // DnD targets: permitir soltar
+    list.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      list.classList.add('ring-2', 'ring-indigo-300');
+    });
+    list.addEventListener('dragleave', () => {
+      list.classList.remove('ring-2', 'ring-indigo-300');
+    });
+    list.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      list.classList.remove('ring-2', 'ring-indigo-300');
+      if (!draggedTask) return;
+      const taskId = draggedTask.dataset.taskId;
+      const fromColumnId = draggedTask.dataset.columnId;
+      const toColumnId = list.dataset.columnId;
+      if (!taskId || !toColumnId || toColumnId === fromColumnId) return;
+      const token = getToken();
+      if (!token) return;
+      try {
+        await updateTask(Number(taskId), { column_id: Number(toColumnId) }, token, { apiBase: getApiBase() });
+        // Mover DOM de forma optimista
+        const fromList = draggedTask.parentElement;
+        list.appendChild(draggedTask);
+        draggedTask.dataset.columnId = String(toColumnId);
+        // Actualizar contadores
+        const toColEl = list.closest('.rounded-lg.border.border-slate-200.bg-white.p-4.shadow-sm');
+        const fromColEl = fromList?.closest('.rounded-lg.border.border-slate-200.bg-white.p-4.shadow-sm');
+        const toCount = toColEl?.querySelector('.task-count');
+        const fromCount = fromColEl?.querySelector('.task-count');
+        if (toCount) toCount.textContent = `${list.querySelectorAll('.task-card').length} tareas`;
+        if (fromCount && fromList) fromCount.textContent = `${fromList.querySelectorAll('.task-card').length} tareas`;
+      } catch (err) {
+        alert(err?.message ?? String(err));
+      }
+    });
     for (const task of col.tasks || []) {
       const card = createTaskCard(task);
       list.appendChild(card);
@@ -180,12 +240,172 @@ export function createTaskCard(task) {
     CRITICAL: 'border-red-400',
   };
   const border = priorityToBorder[task.priority] || 'border-slate-200';
-  card.className = `${base} ${border}`;
+  card.className = `${base} ${border} task-card cursor-pointer`;
+  card.setAttribute('draggable', 'true');
+  card.dataset.taskId = String(task.id);
+  card.dataset.columnId = String(task.column_id);
+  card.dataset.title = task.title;
+  if (task.description != null) card.dataset.description = task.description;
+  card.dataset.priority = task.priority;
   card.innerHTML = `
     <div class="text-sm font-medium text-slate-800">${task.title}</div>
     <div class="mt-1 text-xs text-slate-600">Prioridad: ${task.priority}</div>
   `;
+  // Drag events
+  card.addEventListener('dragstart', (e) => {
+    draggedTask = card;
+    card.classList.add('opacity-50');
+  });
+  card.addEventListener('dragend', () => {
+    if (draggedTask === card) draggedTask = null;
+    card.classList.remove('opacity-50');
+  });
   return card;
+}
+
+function attachKanbanListeners() {
+  const kanban = $('#kanban-container');
+  if (!kanban) return;
+  kanban.addEventListener('click', (e) => {
+    const card = e.target.closest('.task-card');
+    if (card) {
+      const taskId = card.dataset.taskId;
+      const columnId = card.dataset.columnId;
+      const title = card.dataset.title || '';
+      const description = card.dataset.description || '';
+      const priority = card.dataset.priority || 'MEDIUM';
+      // Prefill modal for edit
+      $('#task-modal-title').textContent = 'Editar tarea';
+      $('#task-id-input').value = String(taskId);
+      $('#task-column-id-input').value = String(columnId);
+      $('#task-title-input').value = title;
+      $('#task-desc-input').value = description;
+      $('#task-priority-input').value = priority;
+      $('#task-delete-btn').classList.remove('hidden');
+      openModal('task-modal');
+      return;
+    }
+    const addBtn = e.target.closest('.add-task-btn');
+    if (addBtn) {
+      const columnId = addBtn.getAttribute('data-column-id');
+      $('#task-modal-title').textContent = 'Crear tarea';
+      $('#task-id-input').value = '';
+      $('#task-column-id-input').value = String(columnId);
+      $('#task-title-input').value = '';
+      $('#task-desc-input').value = '';
+      $('#task-priority-input').value = 'MEDIUM';
+      $('#task-delete-btn').classList.add('hidden');
+      openModal('task-modal');
+    }
+  });
+}
+
+function attachModalListeners() {
+  // Cerrar por botones data-modal-close
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-modal-close]');
+    if (btn) closeModal(btn.getAttribute('data-modal-close'));
+  });
+
+  const createBoardBtn = $('#create-board-btn');
+  if (createBoardBtn) {
+    createBoardBtn.addEventListener('click', () => {
+      $('#board-name-input').value = '';
+      openModal('board-modal');
+    });
+  }
+
+  const createColumnBtn = $('#create-column-btn');
+  if (createColumnBtn) {
+    createColumnBtn.addEventListener('click', () => {
+      const selector = $('#board-selector');
+      const boardId = selector?.value;
+      if (!boardId) return;
+      $('#column-board-id-input').value = String(boardId);
+      const defaultPos = Array.isArray(currentColumns) ? currentColumns.length : 0;
+      $('#column-position-input').value = String(defaultPos);
+      $('#column-name-input').value = '';
+      openModal('column-modal');
+    });
+  }
+
+  const boardForm = $('#board-form');
+  if (boardForm) {
+    boardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = getToken();
+      if (!token) return;
+      const name = $('#board-name-input').value.trim();
+      try {
+        await createBoard(name, token, { apiBase: getApiBase() });
+        closeModal('board-modal');
+        await initializeDashboard();
+      } catch (err) {
+        alert(err?.message ?? String(err));
+      }
+    });
+  }
+
+  const columnForm = $('#column-form');
+  if (columnForm) {
+    columnForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = getToken();
+      if (!token) return;
+      const boardId = Number($('#column-board-id-input').value);
+      const name = $('#column-name-input').value.trim();
+      const position = Number($('#column-position-input').value);
+      try {
+        await createColumn(boardId, name, position, token, { apiBase: getApiBase() });
+        closeModal('column-modal');
+        await loadBoard(boardId);
+      } catch (err) {
+        alert(err?.message ?? String(err));
+      }
+    });
+  }
+
+  const taskForm = $('#task-form');
+  const deleteBtn = $('#task-delete-btn');
+  if (taskForm) {
+    taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = getToken();
+      if (!token) return;
+      const taskId = $('#task-id-input').value;
+      const columnId = Number($('#task-column-id-input').value);
+      const title = $('#task-title-input').value.trim();
+      const description = $('#task-desc-input').value;
+      const priority = $('#task-priority-input').value;
+      try {
+        if (taskId) {
+          await updateTask(Number(taskId), { title, description, priority, column_id: columnId }, token, { apiBase: getApiBase() });
+        } else {
+          await createTask(columnId, title, description, priority, token, { apiBase: getApiBase() });
+        }
+        closeModal('task-modal');
+        await loadBoard(currentBoardId ?? Number($('#board-selector').value));
+      } catch (err) {
+        alert(err?.message ?? String(err));
+      }
+    });
+  }
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      const token = getToken();
+      if (!token) return;
+      const taskId = $('#task-id-input').value;
+      if (!taskId) return;
+      if (!confirm('¿Eliminar esta tarea?')) return;
+      try {
+        await deleteTask(Number(taskId), token, { apiBase: getApiBase() });
+        closeModal('task-modal');
+        await loadBoard(currentBoardId ?? Number($('#board-selector').value));
+      } catch (err) {
+        alert(err?.message ?? String(err));
+      }
+    });
+  }
 }
 
 function attachBoardSelectorListener() {
@@ -194,6 +414,8 @@ function attachBoardSelectorListener() {
   selector.addEventListener('change', async (e) => {
     const value = e.target.value;
     if (value) await loadBoard(value);
+    const btn = $('#create-column-btn');
+    if (btn) btn.disabled = !value;
   });
 }
 
@@ -243,6 +465,8 @@ function attachAuthListeners() {
 async function render() {
   attachBoardSelectorListener();
   attachAuthListeners();
+  attachModalListeners();
+  attachKanbanListeners();
   const token = getToken();
   if (token) {
     hide(document.querySelector('#login-section'));

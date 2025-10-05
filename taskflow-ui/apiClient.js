@@ -48,12 +48,68 @@ export async function getTasksByColumn(columnId, token, { apiBase } = {}) {
   return request(`/columns/${encodeURIComponent(columnId)}/tasks`, token, {}, apiBase);
 }
 
+// Crear tablero
+export async function createBoard(name, token, { apiBase } = {}) {
+  if (!name) throw new Error("name es requerido");
+  return request(`/boards/`, token, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  }, apiBase);
+}
+
+// Crear columna
+export async function createColumn(boardId, name, position, token, { apiBase } = {}) {
+  if (boardId == null) throw new Error("boardId es requerido");
+  if (!name) throw new Error("name es requerido");
+  if (position == null) throw new Error("position es requerido");
+  return request(`/columns/`, token, {
+    method: "POST",
+    body: JSON.stringify({ board_id: boardId, name, position }),
+  }, apiBase);
+}
+
+// Crear tarea
+export async function createTask(columnId, title, description, priority, token, { apiBase } = {}) {
+  if (columnId == null) throw new Error("columnId es requerido");
+  if (!title) throw new Error("title es requerido");
+  if (!priority) throw new Error("priority es requerido");
+  const body = { column_id: columnId, title, priority };
+  if (description != null) body.description = description;
+  return request(`/tasks/`, token, {
+    method: "POST",
+    body: JSON.stringify(body),
+  }, apiBase);
+}
+
+// Actualizar tarea
+export async function updateTask(taskId, data, token, { apiBase } = {}) {
+  if (taskId == null) throw new Error("taskId es requerido");
+  if (!data || typeof data !== "object") throw new Error("data inválido");
+  return request(`/tasks/${encodeURIComponent(taskId)}`, token, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  }, apiBase);
+}
+
+// Eliminar tarea
+export async function deleteTask(taskId, token, { apiBase } = {}) {
+  if (taskId == null) throw new Error("taskId es requerido");
+  return request(`/tasks/${encodeURIComponent(taskId)}`, token, {
+    method: "DELETE",
+  }, apiBase);
+}
+
 // Factoría opcional para crear un cliente con apiBase preconfigurado
 export function createApiClient({ apiBase = DEFAULT_API_BASE } = {}) {
   return {
     getBoards: (token) => getBoards(token, { apiBase }),
     getBoardColumns: (boardId, token) => getBoardColumns(boardId, token, { apiBase }),
     getTasksByColumn: (columnId, token) => getTasksByColumn(columnId, token, { apiBase }),
+    createBoard: (name, token) => createBoard(name, token, { apiBase }),
+    createColumn: (boardId, name, position, token) => createColumn(boardId, name, position, token, { apiBase }),
+    createTask: (columnId, title, description, priority, token) => createTask(columnId, title, description, priority, token, { apiBase }),
+    updateTask: (taskId, data, token) => updateTask(taskId, data, token, { apiBase }),
+    deleteTask: (taskId, token) => deleteTask(taskId, token, { apiBase }),
   };
 }
 
