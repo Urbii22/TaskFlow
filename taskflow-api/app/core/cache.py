@@ -19,7 +19,10 @@ def init_cache() -> None:
     if settings.ENV.lower().startswith("test"):
         FastAPICache.init(InMemoryBackend(), prefix="taskflow-cache:", coder=JsonCoder())
     else:
-        redis_client = redis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
+        # Importante: no usar decode_responses=True porque fastapi-cache
+        # espera bytes y realiza value.decode() durante la deserialización.
+        # Si Redis devuelve str se produce: 'str' object has no attribute 'decode'.
+        redis_client = redis.from_url(settings.REDIS_URL)
         FastAPICache.init(RedisBackend(redis_client), prefix="taskflow-cache:", coder=JsonCoder())
 
 

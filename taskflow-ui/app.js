@@ -149,6 +149,9 @@ export async function loadBoard(boardId) {
     currentBoardId = boardId;
     currentColumns = columnsWithTasks;
 
+    // Limpiar el placeholder de carga antes de renderizar
+    container.innerHTML = '';
+
     renderKanbanBoard(columnsWithTasks);
   } catch (err) {
     container.innerHTML = `<p class="text-sm text-red-600">Error al cargar el tablero: ${err?.message ?? err}</p>`;
