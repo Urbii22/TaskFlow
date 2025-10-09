@@ -99,6 +99,16 @@ export async function deleteTask(taskId, token, { apiBase } = {}) {
   }, apiBase);
 }
 
+// Registro de usuario
+export async function register(email, password, { apiBase } = {}) {
+  if (!email) throw new Error("email es requerido");
+  if (!password) throw new Error("password es requerido");
+  return request(`/auth/register`, undefined, {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  }, apiBase);
+}
+
 // Factoría opcional para crear un cliente con apiBase preconfigurado
 export function createApiClient({ apiBase = DEFAULT_API_BASE } = {}) {
   return {
@@ -110,6 +120,7 @@ export function createApiClient({ apiBase = DEFAULT_API_BASE } = {}) {
     createTask: (columnId, title, description, priority, token) => createTask(columnId, title, description, priority, token, { apiBase }),
     updateTask: (taskId, data, token) => updateTask(taskId, data, token, { apiBase }),
     deleteTask: (taskId, token) => deleteTask(taskId, token, { apiBase }),
+    register: (email, password) => register(email, password, { apiBase }),
   };
 }
 

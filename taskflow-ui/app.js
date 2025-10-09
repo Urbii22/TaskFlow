@@ -1,4 +1,4 @@
-import { getBoards, getBoardColumns, getTasksByColumn, createBoard, createColumn, createTask, updateTask, deleteTask } from './apiClient.js';
+import { getBoards, getBoardColumns, getTasksByColumn, createBoard, createColumn, createTask, updateTask, deleteTask, register } from './apiClient.js';
 
 // Utilidades simples de token; en un caso real vendría de login y storage
 function getToken() {
@@ -428,6 +428,12 @@ function attachAuthListeners() {
   const passwordInput = document.querySelector('#password-input');
   const errorBox = document.querySelector('#login-error');
   const logoutBtn = document.querySelector('#logout-btn');
+  const openRegisterBtn = document.querySelector('#open-register-btn');
+  const registerForm = document.querySelector('#register-form');
+  const registerEmailInput = document.querySelector('#register-email-input');
+  const registerPasswordInput = document.querySelector('#register-password-input');
+  const registerErrorBox = document.querySelector('#register-error');
+  const registerSuccessBox = document.querySelector('#register-success');
 
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -447,6 +453,50 @@ function attachAuthListeners() {
       } catch (err) {
         errorBox.textContent = err?.message ?? String(err);
         show(errorBox);
+      }
+    });
+  }
+
+  if (openRegisterBtn) {
+    openRegisterBtn.addEventListener('click', () => {
+      if (registerEmailInput) registerEmailInput.value = '';
+      if (registerPasswordInput) registerPasswordInput.value = '';
+      if (registerErrorBox) { registerErrorBox.textContent = ''; hide(registerErrorBox); }
+      if (registerSuccessBox) { registerSuccessBox.textContent = ''; hide(registerSuccessBox); }
+      openModal('register-modal');
+    });
+  }
+
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (registerErrorBox) { registerErrorBox.textContent = ''; hide(registerErrorBox); }
+      if (registerSuccessBox) { registerSuccessBox.textContent = ''; hide(registerSuccessBox); }
+      try {
+        const email = registerEmailInput?.value?.trim();
+        const password = registerPasswordInput?.value;
+        await register(email, password, { apiBase: getApiBase() });
+        if (registerSuccessBox) {
+          registerSuccessBox.textContent = 'Registro exitoso. Iniciando sesión...';
+          show(registerSuccessBox);
+        }
+        // Auto login
+        const result = await login(email, password);
+        const token = result?.access_token;
+        if (!token) throw new Error('Login automático falló');
+        try { localStorage.setItem('taskflow_token', token); } catch (_) {}
+        closeModal('register-modal');
+        hide(document.querySelector('#login-section'));
+        show(logoutBtn);
+        show(document.querySelector('#empty-state'));
+        await initializeDashboard();
+      } catch (err) {
+        if (registerErrorBox) {
+          registerErrorBox.textContent = err?.message ?? String(err);
+          show(registerErrorBox);
+        } else {
+          alert(err?.message ?? String(err));
+        }
       }
     });
   }
