@@ -11,8 +11,76 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
 
+    <!-- Tailwind config (debe declararse antes del CDN) -->
+    <script>
+      // Configuración extendida de Tailwind para animaciones y tokens simples
+      tailwind = window.tailwind || {};
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                primary: '#4f46e5',
+                secondary: '#06b6d4',
+              },
+              priority: {
+                low: '#64748b',
+                medium: '#60a5fa',
+                high: '#f59e0b',
+                critical: '#ef4444',
+              },
+            },
+            boxShadow: {
+              elevated: '0 6px 16px rgba(2,6,23,.08), 0 2px 6px rgba(2,6,23,.06)',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              fadeOut: {
+                '0%': { opacity: '1' },
+                '100%': { opacity: '0' },
+              },
+              scaleIn: {
+                '0%': { opacity: '0', transform: 'scale(0.96)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              scaleOut: {
+                '0%': { opacity: '1', transform: 'scale(1)' },
+                '100%': { opacity: '0', transform: 'scale(0.96)' },
+              },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(6px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              pop: {
+                '0%': { transform: 'scale(0.98)' },
+                '100%': { transform: 'scale(1)' },
+              },
+            },
+            animation: {
+              'fade-in': 'fadeIn 200ms ease-out',
+              'fade-out': 'fadeOut 160ms ease-in',
+              'modal-in': 'scaleIn 200ms cubic-bezier(0.22, 1, 0.36, 1)',
+              'modal-out': 'scaleOut 160ms cubic-bezier(0.4, 0, 1, 1)',
+              'slide-up': 'slideUp 220ms cubic-bezier(0.22, 1, 0.36, 1)',
+              'pop': 'pop 140ms ease-out',
+            },
+          },
+        },
+      };
+    </script>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Toastify (toasts) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <!-- AutoAnimate (animaciones automáticas de listas) -->
+    <script src="https://cdn.jsdelivr.net/npm/@formkit/auto-animate"></script>
 
     <style>
       /* Fuente base */

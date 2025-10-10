@@ -56,19 +56,84 @@ function hide(el) {
   el.classList.add('hidden');
 }
 
+// Toast helpers (Toastify)
+function toastSuccess(message) {
+  try {
+    if (window.Toastify) {
+      window.Toastify({ text: message, duration: 2400, gravity: 'top', position: 'right', style: { background: '#16a34a' } }).showToast();
+    }
+  } catch (_) {}
+}
+
+function toastError(message) {
+  try {
+    if (window.Toastify) {
+      window.Toastify({ text: message, duration: 2800, gravity: 'top', position: 'right', style: { background: '#dc2626' } }).showToast();
+    }
+  } catch (_) {}
+}
+
 // Estado actual del tablero cargado
 let currentBoardId = null;
 let currentColumns = [];
 let draggedTask = null;
 
 function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden');
+  const overlay = document.getElementById(id);
+  if (!overlay) return;
+  overlay.classList.remove('hidden');
+  overlay.classList.remove('animate-fade-out');
+  overlay.classList.add('animate-fade-in');
+  const content = overlay.querySelector(':scope > div');
+  if (content) {
+    content.classList.remove('animate-modal-out');
+    content.classList.add('animate-modal-in');
+  }
 }
 
 function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('hidden');
+  const overlay = document.getElementById(id);
+  if (!overlay) return;
+  overlay.classList.remove('animate-fade-in');
+  overlay.classList.add('animate-fade-out');
+  const content = overlay.querySelector(':scope > div');
+  if (content) {
+    content.classList.remove('animate-modal-in');
+    content.classList.add('animate-modal-out');
+  }
+  const handleEnd = () => {
+    overlay.classList.add('hidden');
+    overlay.removeEventListener('animationend', handleEnd);
+    if (content) content.classList.remove('animate-modal-out');
+    overlay.classList.remove('animate-fade-out');
+  };
+  overlay.addEventListener('animationend', handleEnd);
+}
+
+// Skeletons de Kanban
+function renderKanbanSkeleton(columns = 3, cardsPerColumn = 3) {
+  const kanban = $('#kanban-container');
+  if (!kanban) return;
+  const grid = document.createElement('div');
+  grid.className = 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3';
+  for (let i = 0; i < columns; i++) {
+    const col = document.createElement('div');
+    col.className = 'rounded-lg border border-slate-200 bg-white p-4 shadow-sm';
+    const header = document.createElement('div');
+    header.className = 'mb-3 h-5 w-32 rounded-md bg-slate-200 animate-pulse';
+    col.appendChild(header);
+    const list = document.createElement('div');
+    list.className = 'space-y-2';
+    for (let j = 0; j < cardsPerColumn; j++) {
+      const card = document.createElement('div');
+      card.className = 'h-16 rounded-md border border-slate-200 bg-slate-100 animate-pulse';
+      list.appendChild(card);
+    }
+    col.appendChild(list);
+    grid.appendChild(col);
+  }
+  kanban.innerHTML = '';
+  kanban.appendChild(grid);
 }
 
 export async function initializeDashboard() {
@@ -126,6 +191,8 @@ export async function loadBoard(boardId) {
     return;
   }
   container.innerHTML = '<p class="text-sm text-slate-600">Cargando tablero...</p>';
+  // Mostrar skeleton de Kanban mientras se carga
+  renderKanbanSkeleton(3, 3);
 
   try {
     const columnsPage = await getBoardColumns(boardId, token, { apiBase: getApiBase() });
@@ -171,7 +238,7 @@ export function renderKanbanBoard(columns) {
 
   for (const col of columns) {
     const colEl = document.createElement('div');
-    colEl.className = 'rounded-lg border border-slate-200 bg-white p-4 shadow-sm';
+    colEl.className = 'rounded-lg border border-slate-200 bg-white p-4 shadow-sm animate-slide-up';
 
     const header = document.createElement('div');
     header.className = 'mb-3 flex items-center justify-between';
@@ -190,14 +257,14 @@ export function renderKanbanBoard(columns) {
     // DnD targets: permitir soltar
     list.addEventListener('dragover', (e) => {
       e.preventDefault();
-      list.classList.add('ring-2', 'ring-indigo-300');
+      list.classList.add('ring-2', 'ring-indigo-300', 'ring-offset-1');
     });
     list.addEventListener('dragleave', () => {
-      list.classList.remove('ring-2', 'ring-indigo-300');
+      list.classList.remove('ring-2', 'ring-indigo-300', 'ring-offset-1');
     });
     list.addEventListener('drop', async (e) => {
       e.preventDefault();
-      list.classList.remove('ring-2', 'ring-indigo-300');
+      list.classList.remove('ring-2', 'ring-indigo-300', 'ring-offset-1');
       if (!draggedTask) return;
       const taskId = draggedTask.dataset.taskId;
       const fromColumnId = draggedTask.dataset.columnId;
@@ -218,8 +285,9 @@ export function renderKanbanBoard(columns) {
         const fromCount = fromColEl?.querySelector('.task-count');
         if (toCount) toCount.textContent = `${list.querySelectorAll('.task-card').length} tareas`;
         if (fromCount && fromList) fromCount.textContent = `${fromList.querySelectorAll('.task-card').length} tareas`;
+        toastSuccess('Tarea movida');
       } catch (err) {
-        alert(err?.message ?? String(err));
+        toastError(err?.message ?? String(err));
       }
     });
     for (const task of col.tasks || []) {
@@ -227,15 +295,19 @@ export function renderKanbanBoard(columns) {
       list.appendChild(card);
     }
     colEl.appendChild(list);
+    // Activar animación automática en la lista
+    try { if (window.autoAnimate) window.autoAnimate(list); } catch (_) {}
     grid.appendChild(colEl);
   }
 
   kanban.appendChild(grid);
+  // Activar animación automática en el grid
+  try { if (window.autoAnimate) window.autoAnimate(grid); } catch (_) {}
 }
 
 export function createTaskCard(task) {
   const card = document.createElement('div');
-  const base = 'rounded-md border bg-white p-3 shadow-sm';
+  const base = 'rounded-md border bg-white p-3 shadow-sm transition will-change-transform hover:shadow-elevated hover:-translate-y-0.5 active:translate-y-0';
   const priorityToBorder = {
     LOW: 'border-slate-200',
     MEDIUM: 'border-blue-200',
@@ -243,7 +315,14 @@ export function createTaskCard(task) {
     CRITICAL: 'border-red-400',
   };
   const border = priorityToBorder[task.priority] || 'border-slate-200';
-  card.className = `${base} ${border} task-card cursor-pointer`;
+  const priorityToAccent = {
+    LOW: 'border-l-slate-400',
+    MEDIUM: 'border-l-blue-400',
+    HIGH: 'border-l-amber-500',
+    CRITICAL: 'border-l-red-500',
+  };
+  const accent = priorityToAccent[task.priority] || 'border-l-slate-400';
+  card.className = `${base} ${border} border-l-4 ${accent} task-card cursor-pointer animate-slide-up`;
   card.setAttribute('draggable', 'true');
   card.dataset.taskId = String(task.id);
   card.dataset.columnId = String(task.column_id);
@@ -310,6 +389,26 @@ function attachModalListeners() {
     if (btn) closeModal(btn.getAttribute('data-modal-close'));
   });
 
+  // Cerrar por clic en overlay (fuera del contenido)
+  const overlays = ['board-modal', 'column-modal', 'task-modal', 'register-modal'];
+  overlays.forEach((id) => {
+    const ov = document.getElementById(id);
+    if (!ov) return;
+    ov.addEventListener('click', (e) => {
+      if (e.target === ov) closeModal(id);
+    });
+  });
+
+  // Cerrar por ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      overlays.forEach((id) => {
+        const ov = document.getElementById(id);
+        if (ov && !ov.classList.contains('hidden')) closeModal(id);
+      });
+    }
+  });
+
   const createBoardBtn = $('#create-board-btn');
   if (createBoardBtn) {
     createBoardBtn.addEventListener('click', () => {
@@ -343,8 +442,9 @@ function attachModalListeners() {
         await createBoard(name, token, { apiBase: getApiBase() });
         closeModal('board-modal');
         await initializeDashboard();
+        toastSuccess('Tablero creado');
       } catch (err) {
-        alert(err?.message ?? String(err));
+        toastError(err?.message ?? String(err));
       }
     });
   }
@@ -362,8 +462,9 @@ function attachModalListeners() {
         await createColumn(boardId, name, position, token, { apiBase: getApiBase() });
         closeModal('column-modal');
         await loadBoard(boardId);
+        toastSuccess('Columna creada');
       } catch (err) {
-        alert(err?.message ?? String(err));
+        toastError(err?.message ?? String(err));
       }
     });
   }
@@ -383,13 +484,15 @@ function attachModalListeners() {
       try {
         if (taskId) {
           await updateTask(Number(taskId), { title, description, priority, column_id: columnId }, token, { apiBase: getApiBase() });
+          toastSuccess('Tarea actualizada');
         } else {
           await createTask(columnId, title, description, priority, token, { apiBase: getApiBase() });
+          toastSuccess('Tarea creada');
         }
         closeModal('task-modal');
         await loadBoard(currentBoardId ?? Number($('#board-selector').value));
       } catch (err) {
-        alert(err?.message ?? String(err));
+        toastError(err?.message ?? String(err));
       }
     });
   }
@@ -404,8 +507,9 @@ function attachModalListeners() {
         await deleteTask(Number(taskId), token, { apiBase: getApiBase() });
         closeModal('task-modal');
         await loadBoard(currentBoardId ?? Number($('#board-selector').value));
+        toastSuccess('Tarea eliminada');
       } catch (err) {
-        alert(err?.message ?? String(err));
+        toastError(err?.message ?? String(err));
       }
     });
   }
